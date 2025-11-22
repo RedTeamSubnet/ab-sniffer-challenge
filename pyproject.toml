@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "auto-browser-sniffer"
-authors = [{ name = "Bekbolot", email = "bekbolot.hbai@gmail.com" }]
+authors = [{ name = "Bekbolot" }]
 description = "Private internal package for the ABS automatic browser sniffer challenge."
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
@@ -33,8 +33,6 @@ dynamic = ["version", "dependencies", "optional-dependencies"]
 version = { attr = "auto_browser_sniffer.__version__.__version__" }
 dependencies = { file = "./requirements.txt" }
 
-optional-dependencies = {}
-
 [tool.setuptools.dynamic.optional-dependencies]
 test = { file = ["./requirements/requirements.test.txt"] }
 build = { file = ["./requirements/requirements.build.txt"] }
@@ -47,7 +45,7 @@ dev = { file = [
 ] }
 
 [project.urls]
-Homepage = "https://github.com/<org>/challenge.auto_browser_sniffer"
-Repository = "https://github.com/<org>/challenge.auto_browser_sniffer.git"
-Issues = "https://github.com/<org>/challenge.auto_browser_sniffer/issues"
-Changelog = "https://github.com/<org>/challenge.auto_browser_sniffer/releases"
+Homepage = "https://github.com/RedTeamSubnet/challenge.auto_browser_sniffer"
+Repository = "https://github.com/RedTeamSubnet/challenge.auto_browser_sniffer.git"
+Issues = "https://github.com/RedTeamSubnet/challenge.auto_browser_sniffer/issues"
+Changelog = "https://github.com/RedTeamSubnet/challenge.auto_browser_sniffer/releases"
