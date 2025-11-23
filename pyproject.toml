@@ -45,6 +45,9 @@ dev = { file = [
     "./requirements/requirements.dev.txt",
 ] }
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [project.urls]
 Homepage = "https://github.com/RedTeamSubnet/challenge.auto_browser_sniffer"
 Repository = "https://github.com/RedTeamSubnet/challenge.auto_browser_sniffer.git"
