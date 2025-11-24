@@ -19,7 +19,7 @@ class ABSController(Controller):
     )  # {docker_hub_id: MinerChallengeCommit}
 
     """
-    A specialized controller for the 'ab_sniffer_v2' challenge.
+    A specialized controller for the 'ab_sniffer_v3' challenge.
     Inherits from the base Controller and modifies specific logic.
     """
 
@@ -45,6 +45,11 @@ class ABSController(Controller):
         # Get baseline reference comparison docker hub IDs from challenge info
         self.baseline_reference_comparison_docker_hub_ids = self.challenge_info.get(
             "baseline_reference_comparison_docker_hub_ids", []
+        )
+
+        comparison_config = self.challenge_info.get("comparison_config", {})
+        self.comparison_min_acceptable_score = comparison_config.get(
+            "min_acceptable_score", 0.7
         )
 
         # Initialize local storage for this instance
@@ -207,7 +212,10 @@ class ABSController(Controller):
 
             _higest_comparison_score = miner_commit.get_higest_comparison_score()
 
-            if _higest_comparison_score >= 0.6 or _higest_comparison_score == 0.0:
+            if (
+                _higest_comparison_score >= self.comparison_min_acceptable_score
+                or _higest_comparison_score == 0.0
+            ):
                 bt.logging.info(
                     f"[CONTROLLER - ABSController] Skipping scoring for miner {miner_commit.miner_hotkey} on task {i} due to high comparison score: {_higest_comparison_score}"
                 )

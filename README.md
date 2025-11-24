@@ -1,4 +1,4 @@
-# Auto Browser Sniffer v2 Challenge
+# Auto Browser Sniffer v3 Challenge
 
 The **Auto Browser Sniffer v2 Challenge** is the next iteration of Auto Browser Sniffer challenge series which is  designed to test the skills of miners in developing a browser SDK that can accurately detect the driver type used by bots interacting with a webpage. **The new iteration has two more bot frameworks to be detected and more strict evaluation criteria.** Participants must create an SDK that can be installed on a website and automatically identify various bot drivers based on their behavior or technical characteristics.
 
@@ -49,14 +49,14 @@ cd ~/workspaces/projects
 
 ```sh
 git clone https://github.com/RedTeamSubnet/RedTeam.git && \
-    cd RedTeam/redteam_core/challenge_pool/ab_sniffer_v2
+    cd RedTeam/redteam_core/challenge_pool/ab_sniffer_v3
 ```
 
 **OPTION B.** Clone the repository (for **DEVELOPMENT**: git + ssh key):
 
 ```sh
 git clone --recursive git@github.com:RedTeamSubnet/RedTeam.git && \
-    cd RedTeam/redteam_core/challenge_pool/ab_sniffer_v2 && \
+    cd RedTeam/redteam_core/challenge_pool/ab_sniffer_v3 && \
     git submodule update --init --recursive && \
     git submodule foreach --recursive git checkout main
 ```
