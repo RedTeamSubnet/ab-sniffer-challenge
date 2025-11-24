@@ -1,8 +1,6 @@
 import traceback
-import time
 
 import bittensor as bt
-import requests
 
 
 from redteam_core.challenge_pool import docker_utils
@@ -16,13 +14,12 @@ from redteam_core.validator.models import (
 
 
 class ABSController(Controller):
-    # Class-level cache for baseline reference comparison commits
     _baseline_reference_cache: dict[str, MinerChallengeCommit] = (
         {}
     )  # {docker_hub_id: MinerChallengeCommit}
 
     """
-    A specialized controller for the 'ab_sniffer_v1' challenge.
+    A specialized controller for the 'ab_sniffer_v2' challenge.
     Inherits from the base Controller and modifies specific logic.
     """
 
@@ -43,10 +40,6 @@ class ABSController(Controller):
             miner_commits,
             reference_comparison_commits,
             seed_inputs,
-        )
-
-        self.behavior_scaling_factor = self.challenge_info.get(
-            "behavior_scaling_factor", 0.1
         )
 
         # Get baseline reference comparison docker hub IDs from challenge info
@@ -97,14 +90,8 @@ class ABSController(Controller):
         The method ensures that each miner's submission is evaluated against the challenge inputs,
         and comparison logs are generated to assess performance relative to reference commits.
         """
-        bt.logging.debug(
-            f"[CONTROLLER - ABSController] Starting ABSController challenge with {len(self.baseline_reference_comparison_commits_to_score)} baseline references to score"
-        )
-
-        # Setup challenge, get challenge container and network ready
         self._setup_challenge()
 
-        # Generate new input to score miners
         num_task = self.challenge_info.get(
             "num_tasks", constants.N_CHALLENGES_PER_EPOCH
         )
@@ -120,37 +107,10 @@ class ABSController(Controller):
             f"[CONTROLLER - ABSController] Generated {len(challenge_inputs)} challenge inputs"
         )
 
-        # Score baseline first if it exists
-        if self.baseline_commit.docker_hub_id:
-            try:
-                bt.logging.info(
-                    f"[CONTROLLER - ABSController] Starting baseline images container: {self.baseline_commit.docker_hub_id}"
-                )
-                self._setup_miner_container(self.baseline_commit)
-                self._score_miner_with_new_inputs(
-                    self.baseline_commit, challenge_inputs
-                )
-                docker_utils.remove_container_by_port(
-                    client=self.docker_client,
-                    port=constants.MINER_DOCKER_PORT,
-                )
-                docker_utils.clean_docker_resources(
-                    client=self.docker_client,
-                    remove_containers=True,
-                    remove_images=False,
-                )
-                bt.logging.debug(
-                    f"[CONTROLLER - ABSController] Baseline scoring completed"
-                )
-            except Exception as e:
-                bt.logging.error(f"Error scoring baseline: {e}")
-                bt.logging.error(traceback.format_exc())
-
-        bt.logging.debug(
+        bt.logging.info(
             f"[CONTROLLER - ABSController] Starting baseline reference scoring for {len(self.baseline_reference_comparison_commits_to_score)} references"
         )
 
-        # Score baseline reference comparisons (only those that need scoring)
         for reference_commit in self.baseline_reference_comparison_commits_to_score:
             try:
                 bt.logging.info(
@@ -158,7 +118,7 @@ class ABSController(Controller):
                 )
                 self._setup_miner_container(reference_commit)
 
-                self._get_reference_outputs(reference_commit, challenge_inputs)
+                self._generate_scoring_logs(reference_commit, challenge_inputs)
 
                 docker_utils.remove_container_by_port(
                     client=self.docker_client,
@@ -173,7 +133,6 @@ class ABSController(Controller):
                 bt.logging.info(
                     f"[CONTROLLER - ABSController] Baseline reference scoring logs: {len(reference_commit.scoring_logs)}"
                 )
-                # Update the class cache with the scored commit
                 ABSController._baseline_reference_cache[
                     reference_commit.docker_hub_id
                 ] = reference_commit
@@ -188,19 +147,17 @@ class ABSController(Controller):
             f"[CONTROLLER - ABSController] Starting miner scoring for {len(self.miner_commits)} miners"
         )
 
-        # Score commits with new input and collect comparison logs
         for miner_commit in self.miner_commits:
             uid, hotkey = miner_commit.miner_uid, miner_commit.miner_hotkey
 
             try:
-                # 1. Validate and setup miner container
                 self._setup_miner_container(miner_commit)
 
-                # 2. Score with new inputs
-                self._score_miner_with_new_inputs(miner_commit, challenge_inputs)
+                self._generate_scoring_logs(miner_commit, challenge_inputs)
 
-                # 3. Run reference comparisons
-                self._run_reference_comparison_inputs(miner_commit, challenge_inputs)
+                self._run_reference_comparison_inputs(miner_commit)
+
+                self._score_miner_with_new_inputs(miner_commit, challenge_inputs)
 
             except Exception as e:
                 bt.logging.error(f"Error while processing miner {uid} - {hotkey}: {e}")
@@ -215,7 +172,6 @@ class ABSController(Controller):
                         )
                     )
 
-            # Clean up miner container
             docker_utils.remove_container_by_port(
                 client=self.docker_client,
                 port=constants.MINER_DOCKER_PORT,
@@ -230,11 +186,10 @@ class ABSController(Controller):
             f"[CONTROLLER - ABSController] Challenge completed, cleaning up challenge container"
         )
 
-        # Clean up challenge container
         docker_utils.remove_container(
             client=self.docker_client,
             container_name=self.challenge_name,
-            stop_timeout=60,
+            stop_timeout=10,
             force=True,
             remove_volumes=True,
         )
@@ -244,137 +199,42 @@ class ABSController(Controller):
             remove_images=False,
         )
 
-    def _run_reference_comparison_inputs(
-        self, miner_commit: MinerChallengeCommit, challenge_inputs
-    ):
-        # Skip for baseline commit since it's used as reference
-        if miner_commit.miner_uid == self.baseline_commit.miner_uid:
-            return
-
-        all_reference_comparison_commits = self.reference_comparison_commits + list(
-            ABSController._baseline_reference_cache.values()
-        )
-
-        _sorted_miner_commits = sorted(
-            [
-                x
-                for x in miner_commit.scoring_logs
-                if x.miner_output["log_time"] is not None
-            ],
-            key=lambda x: x.miner_output["log_time"],
-        )
-        if _sorted_miner_commits:
-
-            _latest_commit = (
-                _sorted_miner_commits[-1]
-                if _sorted_miner_commits
-                else miner_commit.scoring_logs[-1]
-            )
-
-        for reference_commit in all_reference_comparison_commits:
-            bt.logging.info(
-                f"[CONTROLLER - ABSController] Running comparison with reference commit {reference_commit.miner_uid}"
-            )
-
-            # Skip if already compared, or if mean score is less than behavior scaling factor, or if miner is the same
-            if (
-                not _latest_commit
-                or reference_commit.docker_hub_id in miner_commit.comparison_logs
-                or _latest_commit.score < self.behavior_scaling_factor
-            ):
-                bt.logging.warning(
-                    f"[CONTROLLER - ABSController] Skipping comparison with {reference_commit.docker_hub_id} for miner {miner_commit.miner_uid} because it has already been compared or the mean score is below the behavior scaling factor."
-                )
-                continue
-            else:
-                miner_commit.comparison_logs[reference_commit.docker_hub_id] = []
-
-            # Process each input from the reference commit's scoring logs
-            for _, reference_log in enumerate(reference_commit.scoring_logs):
-                if (
-                    reference_log.miner_input is None
-                    or reference_log.miner_output is None
-                ):
-                    bt.logging.warning(
-                        f"[CONTROLLER - ABSController] Skipping comparison with {reference_commit.docker_hub_id} for miner because the reference log is missing input or output."
-                    )
-                    continue
-
-                comparison_log = ComparisonLog(
-                    miner_input=reference_log.miner_input,
-                    miner_output=_latest_commit.miner_output,
-                    reference_output=reference_log.miner_output,
-                    reference_hotkey=reference_commit.miner_hotkey,
-                    reference_similarity_score=reference_commit.penalty,
-                )
-
-                # Add to comparison logs
-                miner_commit.comparison_logs[reference_commit.docker_hub_id].append(
-                    comparison_log
-                )
-            # Remove comparison logs if empty or None
-            if (
-                reference_commit.docker_hub_id in miner_commit.comparison_logs
-                and not miner_commit.comparison_logs[reference_commit.docker_hub_id]
-            ):
-                bt.logging.info(
-                    f"[CONTROLLER - ABSController] Removing empty comparison logs for {reference_commit.docker_hub_id} for miner."
-                )
-                del miner_commit.comparison_logs[reference_commit.docker_hub_id]
-            bt.logging.info(
-                f"[CONTROLLER - ABSController] Completed making `comparison_logs` with {reference_commit.docker_hub_id} for miner."
-            )
-
-    def _get_reference_outputs(
-        self, miner_commit: MinerChallengeCommit, challenge_inputs
-    ):
-        """Run and score miner with new challenge inputs."""
-        for i, miner_input in enumerate(challenge_inputs):
-            miner_output, error_message = self._submit_challenge_to_miner(miner_input)
-
-            miner_output["log_time"] = time.time()
-
-            log = ScoringLog(
-                miner_input=miner_input,
-                miner_output=miner_output,
-                score=0.0,
-                error=error_message,
-            )
-
-            # Handle baseline scoring separately
-            if miner_commit.miner_hotkey == "baseline":
-                self.baseline_commit.scoring_logs.append(log)
-            else:
-                # Adjust score relative to baseline if baseline exists and has been scored
-                if (
-                    self.baseline_commit.docker_hub_id
-                    and len(self.baseline_commit.scoring_logs) > i
-                ):
-                    log.score -= self.baseline_commit.scoring_logs[i].score
-                    log.baseline_score = self.baseline_commit.scoring_logs[i].score
-                miner_commit.scoring_logs.append(log)
-
     def _score_miner_with_new_inputs(
         self, miner_commit: MinerChallengeCommit, challenge_inputs
     ):
         """Run and score miner with new challenge inputs."""
         for i, miner_input in enumerate(challenge_inputs):
-            miner_output, error_message = self._submit_challenge_to_miner(miner_input)
+
+            _higest_comparison_score = miner_commit.get_higest_comparison_score()
+
+            if _higest_comparison_score >= 0.6 or _higest_comparison_score == 0.0:
+                bt.logging.info(
+                    f"[CONTROLLER - ABSController] Skipping scoring for miner {miner_commit.miner_hotkey} on task {i} due to high comparison score: {_higest_comparison_score}"
+                )
+                miner_commit.scoring_logs[0].score = 0.0
+                miner_commit.scoring_logs[0].error = (
+                    "[Not Accepted]High comparison score, skipping scoring"
+                )
+
+                continue
+
             score = (
                 self._score_challenge(
                     miner_input=miner_input,
-                    miner_output=miner_output,
+                    miner_output=miner_commit.scoring_logs[0].miner_output,
                     task_id=i,
                 )
-                if miner_output is not None
+                if miner_commit.scoring_logs[0].miner_output is not None
                 else 0.0
             )
-            miner_output["log_time"] = time.time()
 
-            log = ScoringLog(
-                miner_input=miner_input,
-                miner_output=miner_output,
-                score=score,
-                error=error_message,
-            )
-            miner_commit.scoring_logs.append(log)
+            miner_commit.scoring_logs[0].score = score
+
+    def _get_all_reference_commits(self):
+        return self.reference_comparison_commits + list(
+            ABSController._baseline_reference_cache.values()
+        )
+
+    def _exclude_output_keys(self, miner_output: dict, reference_output: dict):
+        miner_output["detection_js"] = None
+        reference_output["detection_js"] = None
