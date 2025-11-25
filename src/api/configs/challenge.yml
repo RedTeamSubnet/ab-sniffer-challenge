@@ -5,20 +5,20 @@ challenge:
   repeated_framework_count: 3
   framework_images:
     - name: seleniumbase
-      image: abdibekbolot/automation_frameworks@sha256:2538c53aed8ec17e32249b54f6da191954874d3285dac228e1e01791d8455d1c
+      image: redteamsubnet61/seleniumbase@sha256:6528bddec31a31e4b8cd2a3940cf34d7697abb4356e02c44ad362eb899c751ed
     - name: seleniumdriverless
-      image: abdibekbolot/automation_frameworks@sha256:da3f48811c368da2e49145c579eda7c541d632af4995495b9109838e4fa654d7
+      image: redteamsubnet61/seleniumdriverless@sha256:9c62b6f0bffe9abaf25fdb36a65b78add7234b59b4cea73cec94916d2ce633b1
     - name: pydoll
-      image: abdibekbolot/automation_frameworks@sha256:e94a907b7ea809223a2e5b5884fd92b3ea1ef851e254655eeb4140ba6712e694
+      image: redteamsubnet61/pydoll@sha256:0b5e38418f58e4d70b27aab161d60d4f962050675a5c55c046353648cfe3bb88
     - name: patchright
-      image: abdibekbolot/automation_frameworks@sha256:8f04be5fb91b00e7af9b8e227bfad187c98ec21c9ad0fce76f7ffdbae877b218
+      image: redteamsubnet61/patchright@sha256:c76f22447b3d25140b1410e01700fca301f27ea46fbfede98e145f36b11bc141
     - name: zendriver
-      image: abdibekbolot/automation_frameworks@sha256:9cc4c2d30033aad72bb855a6ea972894f432cd274d61097d5440b6cbd40f7372
+      image: redteamsubnet61/zendriver@sha256:113f8eb73ae52c265f494099222d688a9061b51c7cb6bc84f659081a4b20a7a2
     - name: nodriver
-      image: abdibekbolot/automation_frameworks@sha256:4d1ac3e2847286cf56be0a71c4a2cc0c1ecd0eab0886a0978f02330f007fd7a6
+      image: redteamsubnet61/nodriver@sha256:00ecd5aaf537133df48292d8f53783226494a06d5ceadba00e3d4514a5908757
     - name: camoufox
-      image: abdibekbolot/automation_frameworks@sha256:f4dc8fada71dbca4564739862769c6452e0e8b0076c7b181ef711047b9872228
+      image: redteamsubnet61/camoufox@sha256:e0d3a4d10985acfe329c5148fd09617a3594e0a75b50cc34786bb76081df2702
     - name: botasaurus
-      image: abdibekbolot/automation_frameworks@sha256:723875c82fcef252ff3e9720cd291ead49d6b1bcd7fe6c8872223843d2d14a26
+      image: redteamsubnet61/botasaurus@sha256:ad6cb733ac8b0a5369ecb7b1c8eddc849e51570673050ef6bf453821510849ae
     - name: puppeteerextra
-      image: abdibekbolot/automation_frameworks@sha256:d87bcbf650a9996a7aee8cea3b7e972279b084842f82007b789bffa3bd7dda1b
+      image: redteamsubnet61/puppeteerextra@sha256:e358795bddad05cf3aa2f06d112aff729bbf2c803e936a6429fd7f55bea1aa4d
