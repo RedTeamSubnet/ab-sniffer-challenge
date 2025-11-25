@@ -1,11 +1,14 @@
-# -*- coding: utf-8 -*-
-from fastapi import APIRouter, Request, HTTPException, Body
+from fastapi import APIRouter, Request, HTTPException, Body, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from api.endpoints.challenge.schemas import MinerInput, MinerOutput
+from api.core.dependencies.auth import auth_api_key
+from api.endpoints.challenge.schemas import (
+    MinerInput,
+    MinerOutput,
+    SubmissionPayloadsPM,
+)
 from api.endpoints.challenge import service
 from api.logger import logger
-from pydantic import BaseModel
 
 
 router = APIRouter(tags=["Challenge"])
@@ -45,7 +48,8 @@ def get_task(request: Request):
     summary="Score",
     description="This endpoint score miner output.",
     response_class=JSONResponse,
-    responses={400: {}, 422: {}},
+    responses={400: {}, 422: {}, 401: {}},
+    dependencies=[Depends(auth_api_key)],
 )
 def post_score(
     request: Request,
@@ -58,22 +62,18 @@ def post_score(
 
     _score: float = 0.0
     try:
-
         _score = service.score(miner_output=miner_output)
 
         logger.success(f"[{_request_id}] - Successfully evaluated the miner output.")
     except Exception as err:
         if isinstance(err, HTTPException):
-            # raise
-            logger.error(
-                f"[{_request_id}] - Failed to evaluate the miner output!",
-            )
+            raise
 
         logger.error(
             f"[{_request_id}] - Failed to evaluate the miner output!",
         )
-        # raise
-        return None
+        raise
+
     logger.success(f"[{_request_id}] - Successfully scored the miner output: {_score}")
     return _score
 
@@ -108,33 +108,27 @@ def _get_web(request: Request):
 
 
 @router.post(
-    "/driver",
-    description="This endpoint posts the driver name for scoring.",
+    "/_payload",
+    description="This endpoint posts the human score.",
     responses={422: {}},
 )
-def post_driver(
-    request: Request,
-    driver: str = Body(..., embed=False),
-):
+def post_payload(request: Request, body: SubmissionPayloadsPM = Body(...)):
     _request_id = request.state.request_id
-    logger.info(f"[{_request_id}] - Posting driver name for scoring ...")
+    logger.info(f"[{_request_id}] - Received submission payload.")
     try:
-        service.post_driver(driver, _request_id)
-        logger.success(
-            f"[{_request_id}] - Successfully posted driver name for scoring."
-        )
+        logger.info(f"{body}")
+        service.submit_payload(body)
+        logger.success(f"[{_request_id}] - Successfully saved payload.")
     except Exception as err:
-        logger.error(
-            f"[{_request_id}] - Error posting driver name for scoring: {str(err)}"
-        )
-        raise HTTPException(
-            status_code=500, detail="Error in posting driver name for scoring"
-        )
+        logger.error(f"[{_request_id}] - Error saving payload: {str(err)}")
+        raise HTTPException(status_code=500, detail="Error in saving payloadß")
 
     return
 
 
-@router.get("/results", response_class=JSONResponse)
+@router.get(
+    "/results", response_class=JSONResponse, dependencies=[Depends(auth_api_key)]
+)
 def get_results(request: Request):
     _request_id = request.state.request_id
     logger.info(f"[{_request_id}] - Getting results...")
@@ -146,17 +140,6 @@ def get_results(request: Request):
         raise HTTPException(status_code=500, detail="Error in getting results")
 
     return JSONResponse(content=results)
-
-
-class ESLintRequest(BaseModel):
-    js_content: str
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "js_content": "// Your JavaScript detection code here\nconsole.log('Hello World');"
-            }
-        }
 
 
 __all__ = ["router"]

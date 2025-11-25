@@ -1,4 +1,4 @@
-# Auto Browser Sniffer v5 Challenge
+# Auto Browser Sniffer v2 Challenge
 
 The **Auto Browser Sniffer v2 Challenge** is the next iteration of Auto Browser Sniffer challenge series which is  designed to test the skills of miners in developing a browser SDK that can accurately detect the driver type used by bots interacting with a webpage. **The new iteration has two more bot frameworks to be detected and more strict evaluation criteria.** Participants must create an SDK that can be installed on a website and automatically identify various bot drivers based on their behavior or technical characteristics.
 
@@ -181,16 +181,16 @@ DEBUG=false
 
 
 ## -- API configs -- ##
-ABSC_API_PORT=10001
-# ABSC_API_LOGS_DIR="/var/log/rest.rt-abs-challenger"
-# ABSC_API_DATA_DIR="/var/lib/rest.rt-abs-challenger"
+ABS_API_PORT=10001
+# ABS_API_LOGS_DIR="/var/log/rest.rt-abs-challenger"
+# ABS_API_DATA_DIR="/var/lib/rest.rt-abs-challenger"
 
-# ABSC_API_VERSION="1"
-# ABSC_API_PREFIX=""
-# ABSC_API_DOCS_ENABLED=true
-# ABSC_API_DOCS_OPENAPI_URL="{api_prefix}/openapi.json"
-# ABSC_API_DOCS_DOCS_URL="{api_prefix}/docs"
-# ABSC_API_DOCS_REDOC_URL="{api_prefix}/redoc"
+# ABS_API_VERSION="1"
+# ABS_API_PREFIX=""
+# ABS_API_DOCS_ENABLED=true
+# ABS_API_DOCS_OPENAPI_URL="{api_prefix}/openapi.json"
+# ABS_API_DOCS_DOCS_URL="{api_prefix}/docs"
+# ABS_API_DOCS_REDOC_URL="{api_prefix}/redoc"
 ```
 
 ## 🏗️ Build Docker Image

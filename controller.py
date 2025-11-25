@@ -238,7 +238,9 @@ class ABSController(Controller):
                 if _scoring_log.miner_output is not None
                 else 0.0
             )
+            scoring_results = self._get_scoring_results()
 
+            _scoring_log.miner_output["scoring_results"] = scoring_results
             _scoring_log.score = score
 
     def _get_scoring_results(self) -> dict:
@@ -250,6 +252,7 @@ class ABSController(Controller):
             response = requests.get(
                 f"{_protocol}://localhost:{constants.CHALLENGE_DOCKER_PORT}/results",
                 verify=_ssl_verify,
+                headers=self.challenge_info.get("scoring_headers", {}),
             )
             scoring_results = response.json()
         except Exception as ex:
