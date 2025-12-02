@@ -100,7 +100,7 @@ Before submitting, you **must** ensure your code passes our ESLint configuration
 
 ## Submission Guide
 
-Follow 1~6 steps to submit your SDK.
+Follow steps 1-6 to submit your SDK.
 
 1. **Navigate to the AB Sniffer v5 Commit Directory**
 
