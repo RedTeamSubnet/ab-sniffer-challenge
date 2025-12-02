@@ -21,8 +21,6 @@ challenge:
       image: redteamsubnet61/zendriver@sha256:113f8eb73ae52c265f494099222d688a9061b51c7cb6bc84f659081a4b20a7a2
     - name: nodriver
       image: redteamsubnet61/nodriver@sha256:00ecd5aaf537133df48292d8f53783226494a06d5ceadba00e3d4514a5908757
-    - name: camoufox
-      image: redteamsubnet61/camoufox@sha256:e0d3a4d10985acfe329c5148fd09617a3594e0a75b50cc34786bb76081df2702
     - name: botasaurus
       image: redteamsubnet61/botasaurus@sha256:ad6cb733ac8b0a5369ecb7b1c8eddc849e51570673050ef6bf453821510849ae
     - name: puppeteerextra
