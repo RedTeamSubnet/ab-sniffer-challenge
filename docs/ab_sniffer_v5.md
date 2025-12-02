@@ -48,7 +48,7 @@ Your SDK should be capable of detecting these automation frameworks and scenario
 
 - **Detection Method**: Analyze automation behavior, unique signatures, or behavioral patterns.
 - **Output Format**: Each detection script must return a simple boolean (`true` or `false`).
-- **Execution Modes**: SDK will be tested in both headless and headfull modes.
+- **Execution Modes**: SDK will be tested in both headless and headful modes.
 - **Reliability**: Each of the 9 targets (8 frameworks + 1 human) will be tested across three separate sessions, for a total of 27 evaluation sessions.
 - **Technical Setup**:
     - Enable headless mode
