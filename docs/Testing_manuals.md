@@ -37,6 +37,7 @@ docker compose up -d
 - Authenticate using provided authentication method. You can find Api-Key from [Environmental variables](../.env)
     ![alt text](./images/image.png)
 - Test your detection files by running the `/score` endpoint
+- if you see the warning log(like `Please visit endpoint <URI> to complete human verification for the task.`) then open given uri in log in your browser to complete human verification in your side.
 
 ## Important Notes
 
