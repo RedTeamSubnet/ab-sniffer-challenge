@@ -84,8 +84,8 @@ class ABSChallengeManager(ChallengeManager):
             miner_commit.score = self._adjust_score_by_similarity(
                 miner_commit.score, miner_commit.penalty
             )
-
-            miner_commit.scored_timestamp = time.time()
+            if not miner_commit.scored_timestamp:
+                miner_commit.scored_timestamp = time.time()
 
             if miner_commit.miner_uid not in self.miner_states:
                 self.miner_states[miner_commit.miner_uid] = MinerChallengeInfo(
