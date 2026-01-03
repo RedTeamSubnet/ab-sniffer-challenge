@@ -6,7 +6,7 @@ import bittensor as bt
 
 from redteam_core.challenge_pool import docker_utils
 from redteam_core.challenge_pool.controller import Controller
-from redteam_core.constants import constants
+from redteam_core.config.main import constants
 from redteam_core.validator.models import MinerChallengeCommit, ScoringLog
 
 
