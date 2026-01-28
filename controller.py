@@ -1,13 +1,9 @@
 import requests
-import traceback
-
 import bittensor as bt
 
-
-from redteam_core.challenge_pool import docker_utils
 from redteam_core.challenge_pool.controller import Controller
 from redteam_core.config.main import constants
-from redteam_core.validator.models import MinerChallengeCommit, ScoringLog
+from redteam_core.validator.models import MinerChallengeCommit
 
 
 class ABSController(Controller):
@@ -38,88 +34,6 @@ class ABSController(Controller):
         comparison_config = self.challenge_info.get("comparison_config", {})
         self.comparison_min_acceptable_score = comparison_config.get(
             "min_acceptable_score", 0.6
-        )
-
-    def start_challenge(self):
-        """
-        Initiates the challenge lifecycle by setting up and executing the challenge Docker container.
-
-        This process involves:
-        1. Building and running the challenge container within an isolated Docker network.
-        2. Generating or retrieving challenge inputs to evaluate miners.
-        3. Iteratively running each miner's Docker container to submit and score their solutions.
-        4. Collecting and logging the results, including any errors encountered during execution.
-        5. Cleaning up Docker resources to ensure no residual containers or images remain.
-
-        The method ensures that each miner's submission is evaluated against the challenge inputs,
-        and comparison logs are generated to assess performance relative to reference commits.
-        """
-        self._setup_challenge()
-
-        num_task = self.challenge_info.get(
-            "num_tasks", constants.N_CHALLENGES_PER_EPOCH
-        )
-        # Start with seed inputs and generate more if needed to reach num_task
-        challenge_inputs = self.seed_inputs.copy()
-        remaining_tasks = max(0, num_task - len(challenge_inputs))
-        if remaining_tasks > 0:
-            challenge_inputs.extend(
-                [self._get_challenge_from_container() for _ in range(remaining_tasks)]
-            )
-
-        bt.logging.debug(
-            f"[CONTROLLER - ABSController] Generated {len(challenge_inputs)} challenge inputs"
-        )
-
-        for miner_commit in self.miner_commits:
-            uid, hotkey = miner_commit.miner_uid, miner_commit.miner_hotkey
-
-            try:
-                self._setup_miner_container(miner_commit)
-
-                self._generate_scoring_logs(miner_commit, challenge_inputs)
-
-                self._run_reference_comparison_inputs(miner_commit)
-
-                self._score_miner_with_new_inputs(miner_commit, challenge_inputs)
-
-            except Exception as e:
-                bt.logging.error(f"Error while processing miner {uid} - {hotkey}: {e}")
-                bt.logging.error(traceback.format_exc())
-                miner_commit.scoring_logs.append(
-                    ScoringLog(
-                        miner_input=None,
-                        miner_output=None,
-                        score=0,
-                        error=str(e),
-                    )
-                )
-
-            docker_utils.remove_container_by_port(
-                client=self.docker_client,
-                port=constants.MINER_DOCKER_PORT,
-            )
-            docker_utils.clean_docker_resources(
-                client=self.docker_client,
-                remove_containers=True,
-                remove_images=False,
-            )
-
-        bt.logging.debug(
-            f"[CONTROLLER - ABSController] Challenge completed, cleaning up challenge container"
-        )
-
-        docker_utils.remove_container(
-            client=self.docker_client,
-            container_name=self.challenge_name,
-            stop_timeout=10,
-            force=True,
-            remove_volumes=True,
-        )
-        docker_utils.clean_docker_resources(
-            client=self.docker_client,
-            remove_containers=True,
-            remove_images=False,
         )
 
     def _score_miner_with_new_inputs(
