@@ -25,3 +25,24 @@ challenge:
       image: redteamsubnet61/botasaurus@sha256:ad6cb733ac8b0a5369ecb7b1c8eddc849e51570673050ef6bf453821510849ae
     - name: puppeteerextra
       image: redteamsubnet61/puppeteerextra@sha256:e358795bddad05cf3aa2f06d112aff729bbf2c803e936a6429fd7f55bea1aa4d
+  bot_runner:
+    url: "http://bot-runner:8080"
+    api_key: "bot_runner_api_key"
+    public_base_url: "http://challenge_server:10001"
+    device_type: "linux"
+    bot: "aad-detect"
+    poll_timeout_sec: 180
+    poll_interval_sec: 2
+    request_timeout_sec: 15
+    busy_retry_count: 3
+    busy_backoff_initial_sec: 0.5
+    busy_backoff_max_sec: 5.0
+    framework_presets:
+      seleniumbase: "seleniumbase-local"
+      seleniumdriverless: "selenium-driverless-local"
+      pydoll: "pydoll-local"
+      patchright: "patchright-local"
+      zendriver: "zendriver-local"
+      nodriver: "nodriver-local"
+      botasaurus: "botasaurus-local"
+      puppeteerextra: "puppeteer-extra-local"

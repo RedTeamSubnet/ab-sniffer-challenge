@@ -1,6 +1,5 @@
 import time
 import pathlib
-import docker
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -18,7 +17,7 @@ from api.endpoints.challenge.schemas import (
 from api.endpoints.challenge import utils as ch_utils
 from api.logger import logger
 from api.endpoints.challenge._payload_manager import payload_manager
-
+from api.endpoints.challenge import _bot_runner
 
 _src_dir = pathlib.Path(__file__).parent.parent.parent.parent.resolve()
 
@@ -48,12 +47,10 @@ def score(
             detections_dir=_detections_dir,
         )
 
-        # Generate a randomized sequence of frameworks to test against
-        _docker_client = docker.from_env()
+        _bot_runner_config = config.challenge.bot_runner
 
         for _framework in _all_tasks.values():
             _framework_name = str(_framework["name"])
-            _framework_image = _framework["image"]
             _framework_order = _framework["order_number"]
             payload_manager.current_task = _framework
             if _framework_name == "human":
@@ -73,15 +70,45 @@ def score(
                 )
                 logger.info(f"Running detection against {_framework_name}")
                 try:
-
-                    ch_utils.run_bot_container(
-                        docker_client=_docker_client,
-                        container_name=_framework_name,
-                        network_name="local_network",
-                        image_name=_framework_image,
-                        ulimit=config.challenge.docker_ulimit,
+                    _driver_preset = _bot_runner_config.framework_presets.get(
+                        _framework_name
                     )
+                    if not _driver_preset:
+                        raise ValueError(
+                            f"No bot-runner driver preset configured for {_framework_name}"
+                        )
 
+                    _api_prefix = getattr(getattr(config, "api", None), "prefix", "")
+                    _web_url = _bot_runner.build_web_url(
+                        str(_bot_runner_config.public_base_url), _api_prefix
+                    )
+                    _batch_id = _bot_runner.trigger_run(
+                        base_url=str(_bot_runner_config.url),
+                        api_key=_bot_runner_config.api_key.get_secret_value(),
+                        bot=_bot_runner_config.bot,
+                        driver_preset=_driver_preset,
+                        device_type=_bot_runner_config.device_type,
+                        web_url=_web_url,
+                        framework_name=_framework_name,
+                        request_timeout_sec=_bot_runner_config.request_timeout_sec,
+                        busy_retry_count=_bot_runner_config.busy_retry_count,
+                        busy_backoff_initial_sec=(
+                            _bot_runner_config.busy_backoff_initial_sec
+                        ),
+                        busy_backoff_max_sec=_bot_runner_config.busy_backoff_max_sec,
+                    )
+                    _run_status = _bot_runner.wait_for_run(
+                        base_url=str(_bot_runner_config.url),
+                        api_key=_bot_runner_config.api_key.get_secret_value(),
+                        batch_id=_batch_id,
+                        poll_timeout_sec=_bot_runner_config.poll_timeout_sec,
+                        poll_interval_sec=_bot_runner_config.poll_interval_sec,
+                        request_timeout_sec=_bot_runner_config.request_timeout_sec,
+                    )
+                    if _run_status not in {"passed", "partial"}:
+                        logger.warning(
+                            f"bot-runner returned {_run_status} for {_framework_name}"
+                        )
                 except Exception as err:
                     logger.error(
                         f"Error running detection for {_framework_name}: {str(err)}"
@@ -99,9 +126,6 @@ def score(
                     payload_manager.update_task_status(
                         _framework_order, TaskStatusEnum.COMPLETED
                     )
-
-                    if not _framework_name == "human":
-                        ch_utils.stop_container(container_name=_framework_name)
                     break
 
                 _bot_timeout -= 1
@@ -112,8 +136,6 @@ def score(
                     payload_manager.update_task_status(
                         _framework_order, TaskStatusEnum.TIMED_OUT
                     )
-                    if not _framework_name == "human":
-                        ch_utils.stop_container(container_name=_framework_name)
                     break
                 time.sleep(1)
         _score = payload_manager.calculate_score()
@@ -154,6 +176,7 @@ def submit_payload(_payload: SubmissionPayloadsPM):
         payload_manager.submit_task(
             framework_names=_final_results,
             payload=_payload.model_dump(),
+            headless_non_ua=_payload.headless_non_ua,
         )
     except Exception as err:
         logger.error(f"Error submitting payload: {str(err)}")
@@ -169,8 +192,8 @@ def get_web(request: Request) -> HTMLResponse:
     else:
         _order_number = 0
     templates = Jinja2Templates(directory=str(_src_dir / "templates"))
-    _abs_result_endpoint = (
-        f"http://{request.scope['server'][0]}:{config.api.port}/_payload"
+    _abs_result_endpoint = _bot_runner._join_url(
+        str(config.challenge.bot_runner.public_base_url), "/_payload"
     )
     logger.info(
         f"serving web page at {_abs_result_endpoint} for order number {_order_number}"
