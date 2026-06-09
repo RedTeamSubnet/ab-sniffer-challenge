@@ -123,7 +123,7 @@ def post_payload(request: Request, body: SubmissionPayloadsPM = Body(...)):
         logger.success(f"[{_request_id}] - Successfully saved payload.")
     except Exception as err:
         logger.error(f"[{_request_id}] - Error saving payload: {str(err)}")
-        raise HTTPException(status_code=500, detail="Error in saving payloadß")
+        raise HTTPException(status_code=500, detail="Error in saving payload")
 
     return
 

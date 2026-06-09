@@ -29,7 +29,7 @@ try:
                 )
 
 except Exception:
-    logger.exception(f"Failed to read detection files in detections folder!")
+    logger.exception("Failed to read detection files in detections folder!")
 
 
 class TaskStatusEnum(str, Enum):
