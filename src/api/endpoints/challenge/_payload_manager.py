@@ -29,7 +29,9 @@ class PayloadManager:
         self.gen_ran_framework_sequence()
         return
 
-    def submit_task(self, framework_names: list[str], payload: dict) -> None:
+    def submit_task(
+        self, framework_names: list[str], payload: dict, headless_non_ua: bool
+    ) -> None:
         try:
             _expected_fm = self.expected_order[payload["order_number"]]
             _is_detected = _expected_fm in framework_names
@@ -44,6 +46,7 @@ class PayloadManager:
                 "submitted_framework": framework_names,
                 "detected": _is_detected,
                 "collided": _is_collided,
+                "headless_non_ua": headless_non_ua,
             }
 
         except Exception as err:

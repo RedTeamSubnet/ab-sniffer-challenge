@@ -165,6 +165,12 @@ class SubmissionPayloadsPM(BaseModel):
         description="Order number of the submission.",
         examples=[0],
     )
+    headless_non_ua: bool = Field(
+        ...,
+        title="Non-UA Headless Detected",
+        description="Indicates whether non-User-Agent headless signals were detected.",
+        examples=[True],
+    )
     model_config = {
         "extra": "forbid",
     }
