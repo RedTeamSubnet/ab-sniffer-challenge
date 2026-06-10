@@ -34,13 +34,11 @@ def test_bot_runner_config_defaults_are_safe():
         url="http://bot-runner:8000",
         api_key="super_secret_bot_runner_key",
         public_base_url="http://challenge:10001",
-        framework_presets={"playwright": "playwright-local"},
     )
 
     assert config.device_type == "linux"
     assert config.bot == "aad-detect"
     assert config.poll_timeout_sec >= config.poll_interval_sec
-    assert config.framework_presets["playwright"] == "playwright-local"
 
 
 def test_bot_runner_config_rejects_too_short_api_key():
@@ -49,7 +47,6 @@ def test_bot_runner_config_rejects_too_short_api_key():
             url="http://bot-runner:8000",
             api_key="short",
             public_base_url="http://challenge:10001",
-            framework_presets={"playwright": "playwright-local"},
         )
 
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import List
 
 from pydantic import Field, SecretStr, BaseModel, AnyHttpUrl, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -10,6 +10,8 @@ from ._base import FrozenBaseConfig
 class FrameworkImageConfig(BaseModel):
     name: str = Field(...)
     image: str = Field(...)
+    # bot-runner driver preset used to launch this framework.
+    preset: str = Field(..., min_length=1)
 
 
 class RunCountsConfig(BaseModel):
@@ -49,7 +51,6 @@ class BotRunnerConfig(FrozenBaseConfig):
     busy_retry_count: int = Field(default=3, ge=0, le=10)
     busy_backoff_initial_sec: float = Field(default=0.5, ge=0.0)
     busy_backoff_max_sec: float = Field(default=5.0, ge=0.0)
-    framework_presets: Dict[str, str] = Field(default_factory=dict)
     run_counts: RunCountsConfig = Field(default_factory=RunCountsConfig)
     shuffle_runs: bool = Field(default=True)
 

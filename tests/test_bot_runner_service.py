@@ -13,6 +13,7 @@ class _DummySettings:
     def __init__(self):
         self.challenge = SimpleNamespace(
             bot_timeout=5,
+            framework_images=[SimpleNamespace(name="dummy-fw", preset="dummy-local")],
             bot_runner=SimpleNamespace(
                 url="http://bot-runner.local:8000",
                 api_key=_Secret(),
@@ -25,7 +26,6 @@ class _DummySettings:
                 busy_retry_count=2,
                 busy_backoff_initial_sec=0,
                 busy_backoff_max_sec=0,
-                framework_presets={"dummy-fw": "dummy-local"},
                 shuffle_runs=True,
             ),
         )

@@ -48,6 +48,9 @@ def score(
         )
 
         _bot_runner_config = config.challenge.bot_runner
+        _framework_presets = {
+            fw.name: fw.preset for fw in config.challenge.framework_images
+        }
 
         _driver_tasks = [t for t in _all_tasks.values() if t["name"] != "human"]
         _human_tasks = len(_all_tasks) - len(_driver_tasks)
@@ -86,9 +89,7 @@ def score(
                 )
                 logger.info(f"Running detection against {_framework_name}")
                 try:
-                    _driver_preset = _bot_runner_config.framework_presets.get(
-                        _framework_name
-                    )
+                    _driver_preset = _framework_presets.get(_framework_name)
                     if not _driver_preset:
                         raise ValueError(
                             f"No bot-runner driver preset configured for {_framework_name}"
