@@ -2,6 +2,11 @@ challenge:
   api_key: "challenge_api_key"
   docker_ulimit: 32768
   bot_timeout: 10
+  # Seconds to wait for a (slow) human-verification run before timing it out.
+  human_timeout: 120
+  # Number of human-verification runs mixed into each scoring cycle.
+  human_count: 3
+  # Legacy: superseded by bot_runner.run_counts (drivers) + human_count (human).
   repeated_framework_count: 3
   verification:
     endpoint: "http://challenge_server:8000/api/v1/verify"
@@ -37,6 +42,13 @@ challenge:
     busy_retry_count: 3
     busy_backoff_initial_sec: 0.5
     busy_backoff_max_sec: 5.0
+    # Per-framework launch counts: headed + headless = runs per driver.
+    # N active drivers x (3 + 2) = 5 runs each, fully shuffled (no fixed order/mode).
+    run_counts:
+      headed: 3
+      headless: 2
+    # Set false for a deterministic order (drivers in list order) when debugging.
+    shuffle_runs: true
     framework_presets:
       seleniumbase: "seleniumbase-local"
       seleniumdriverless: "selenium-driverless-local"

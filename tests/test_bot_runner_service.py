@@ -26,6 +26,7 @@ class _DummySettings:
                 busy_backoff_initial_sec=0,
                 busy_backoff_max_sec=0,
                 framework_presets={"dummy-fw": "dummy-local"},
+                shuffle_runs=True,
             ),
         )
         self.env = "TEST"
@@ -38,7 +39,7 @@ class _DummyPayloadManager:
         self.tasks = {
             0: {
                 "name": "dummy-fw",
-                "image": "abs_dummy-fw",
+                "headless": False,
                 "order_number": 0,
             }
         }
@@ -92,9 +93,9 @@ def test_score_uses_bot_runner(monkeypatch):
     )
 
     assert result == 1.0
-    assert len(trigger_calls) == 2
-    assert [call["headless"] for call in trigger_calls] == [False, True]
-    assert [call["count"] for call in trigger_calls] == [2, 2]
+    assert len(trigger_calls) == 1
+    assert [call["headless"] for call in trigger_calls] == [False]
+    assert [call["count"] for call in trigger_calls] == [1]
     for trigger_call in trigger_calls:
         assert trigger_call["bot"] == "aad-detect"
         assert trigger_call["driver_preset"] == "dummy-local"

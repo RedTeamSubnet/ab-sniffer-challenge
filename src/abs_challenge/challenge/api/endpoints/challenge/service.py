@@ -49,9 +49,25 @@ def score(
 
         _bot_runner_config = config.challenge.bot_runner
 
+        _driver_tasks = [t for t in _all_tasks.values() if t["name"] != "human"]
+        _human_tasks = len(_all_tasks) - len(_driver_tasks)
+        _headed = sum(1 for t in _driver_tasks if t["headless"] is False)
+        _headless_total = sum(1 for t in _driver_tasks if t["headless"] is True)
+        logger.info(
+            "Scoring schedule: %d runs (%d driver [%d headed / %d headless] + "
+            "%d human), order=%s",
+            len(_all_tasks),
+            len(_driver_tasks),
+            _headed,
+            _headless_total,
+            _human_tasks,
+            "shuffled" if _bot_runner_config.shuffle_runs else "deterministic",
+        )
+
         for _framework in _all_tasks.values():
             _framework_name = str(_framework["name"])
             _framework_order = _framework["order_number"]
+            _headless = _framework["headless"]
             payload_manager.current_task = _framework
             if _framework_name == "human":
                 logger.warning(
@@ -61,7 +77,7 @@ def score(
                 if config.env == EnvEnum.PRODUCTION:
                     ch_utils.run_verification_webhook()
 
-                _bot_timeout = 120  # 2 minutes for human
+                _bot_timeout = config.challenge.human_timeout
             else:
                 _bot_timeout = config.challenge.bot_timeout
 
@@ -82,46 +98,45 @@ def score(
                     _web_url = _bot_runner.build_web_url(
                         str(_bot_runner_config.public_base_url), _api_prefix
                     )
-                    for _headless in (False, True):
-                        _mode = "headless" if _headless else "headed"
-                        logger.info(
-                            f"Running {_framework_name} in {_mode} mode with count=2"
+                    _mode = "headless" if _headless else "headed"
+                    logger.info(
+                        f"Running {_framework_name} in {_mode} mode (order {_framework_order})"
+                    )
+                    _batch_id = _bot_runner.trigger_run(
+                        base_url=str(_bot_runner_config.url),
+                        api_key=_bot_runner_config.api_key.get_secret_value(),
+                        bot=_bot_runner_config.bot,
+                        driver_preset=_driver_preset,
+                        device_type=_bot_runner_config.device_type,
+                        web_url=_web_url,
+                        framework_name=_framework_name,
+                        request_timeout_sec=(
+                            _bot_runner_config.request_timeout_sec
+                        ),
+                        count=1,
+                        headless=_headless,
+                        busy_retry_count=_bot_runner_config.busy_retry_count,
+                        busy_backoff_initial_sec=(
+                            _bot_runner_config.busy_backoff_initial_sec
+                        ),
+                        busy_backoff_max_sec=(
+                            _bot_runner_config.busy_backoff_max_sec
+                        ),
+                    )
+                    _run_status = _bot_runner.wait_for_run(
+                        base_url=str(_bot_runner_config.url),
+                        api_key=_bot_runner_config.api_key.get_secret_value(),
+                        batch_id=_batch_id,
+                        poll_timeout_sec=_bot_runner_config.poll_timeout_sec,
+                        poll_interval_sec=_bot_runner_config.poll_interval_sec,
+                        request_timeout_sec=(
+                            _bot_runner_config.request_timeout_sec
+                        ),
+                    )
+                    if _run_status not in {"passed", "partial"}:
+                        logger.warning(
+                            f"bot-runner returned {_run_status} for {_framework_name} in {_mode} mode"
                         )
-                        _batch_id = _bot_runner.trigger_run(
-                            base_url=str(_bot_runner_config.url),
-                            api_key=_bot_runner_config.api_key.get_secret_value(),
-                            bot=_bot_runner_config.bot,
-                            driver_preset=_driver_preset,
-                            device_type=_bot_runner_config.device_type,
-                            web_url=_web_url,
-                            framework_name=_framework_name,
-                            request_timeout_sec=(
-                                _bot_runner_config.request_timeout_sec
-                            ),
-                            count=2,
-                            headless=_headless,
-                            busy_retry_count=_bot_runner_config.busy_retry_count,
-                            busy_backoff_initial_sec=(
-                                _bot_runner_config.busy_backoff_initial_sec
-                            ),
-                            busy_backoff_max_sec=(
-                                _bot_runner_config.busy_backoff_max_sec
-                            ),
-                        )
-                        _run_status = _bot_runner.wait_for_run(
-                            base_url=str(_bot_runner_config.url),
-                            api_key=_bot_runner_config.api_key.get_secret_value(),
-                            batch_id=_batch_id,
-                            poll_timeout_sec=_bot_runner_config.poll_timeout_sec,
-                            poll_interval_sec=_bot_runner_config.poll_interval_sec,
-                            request_timeout_sec=(
-                                _bot_runner_config.request_timeout_sec
-                            ),
-                        )
-                        if _run_status not in {"passed", "partial"}:
-                            logger.warning(
-                                f"bot-runner returned {_run_status} for {_framework_name} in {_mode} mode"
-                            )
                 except Exception as err:
                     logger.error(
                         f"Error running detection for {_framework_name}: {str(err)}"
@@ -131,6 +146,7 @@ def score(
                     )
                     continue
 
+            _configured_timeout = _bot_timeout
             while True:
                 if payload_manager.check_task_compliance(_framework_order):
                     logger.info(
@@ -144,7 +160,7 @@ def score(
                 _bot_timeout -= 1
                 if _bot_timeout <= 0:
                     logger.warning(
-                        f"Detection for {_framework_name} timed out after {config.challenge.bot_timeout} seconds."
+                        f"Detection for {_framework_name} timed out after {_configured_timeout} seconds."
                     )
                     payload_manager.update_task_status(
                         _framework_order, TaskStatusEnum.TIMED_OUT
