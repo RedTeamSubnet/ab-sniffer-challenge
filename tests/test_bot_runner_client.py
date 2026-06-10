@@ -86,7 +86,13 @@ def test_trigger_run_posts_authenticated_request_and_returns_batch_id():
     assert kwargs["json"]["driver_preset"] == "playwright-local"
     assert kwargs["json"]["url"] == "http://challenge:10001/_web"
     assert kwargs["json"]["device_type"] == "linux"
-    assert kwargs["json"]["metadata"]["framework"] == "playwright"
+    assert kwargs["json"]["count"] == 1
+    assert kwargs["json"]["headless"] is True
+    assert kwargs["json"]["metadata"] == {
+        "framework": "playwright",
+        "headless": True,
+        "count": 1,
+    }
 
 
 def test_trigger_run_retries_429_with_backoff(monkeypatch):

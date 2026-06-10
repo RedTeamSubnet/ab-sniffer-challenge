@@ -1,0 +1,234 @@
+import time
+import pathlib
+from fastapi import Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from pydantic import validate_call
+
+from api.core.exceptions import BaseHTTPException
+from api.core.constants import EnvEnum
+from api.config import config
+from api.endpoints.challenge.schemas import (
+    MinerInput,
+    MinerOutput,
+    SubmissionPayloadsPM,
+    TaskStatusEnum,
+)
+from api.endpoints.challenge import utils as ch_utils
+from api.logger import logger
+from api.endpoints.challenge._payload_manager import payload_manager
+from api.endpoints.challenge import _bot_runner
+
+_src_dir = pathlib.Path(__file__).parent.parent.parent.parent.resolve()
+
+
+def get_task() -> MinerInput:
+    """Return a new challenge task."""
+    return MinerInput()
+
+
+@validate_call
+def score(
+    miner_output: MinerOutput,
+    web_url: str,
+) -> float:
+
+    _score = 0.0
+    global payload_manager
+    payload_manager.restart_manager()
+    _all_tasks = payload_manager.tasks
+
+    try:
+        # Copy the detection script to the templates directory
+        _detections_dir = str(_src_dir / "templates" / "static" / "detections")
+
+        ch_utils.copy_detection_files(
+            miner_output=miner_output,
+            detections_dir=_detections_dir,
+        )
+
+        _bot_runner_config = config.challenge.bot_runner
+
+        for _framework in _all_tasks.values():
+            _framework_name = str(_framework["name"])
+            _framework_order = _framework["order_number"]
+            payload_manager.current_task = _framework
+            if _framework_name == "human":
+                logger.warning(
+                    f"Please visit endpoint {web_url} to complete human verification for the task."
+                )
+
+                if config.env == EnvEnum.PRODUCTION:
+                    ch_utils.run_verification_webhook()
+
+                _bot_timeout = 120  # 2 minutes for human
+            else:
+                _bot_timeout = config.challenge.bot_timeout
+
+                payload_manager.update_task_status(
+                    _framework_order, TaskStatusEnum.RUNNING
+                )
+                logger.info(f"Running detection against {_framework_name}")
+                try:
+                    _driver_preset = _bot_runner_config.framework_presets.get(
+                        _framework_name
+                    )
+                    if not _driver_preset:
+                        raise ValueError(
+                            f"No bot-runner driver preset configured for {_framework_name}"
+                        )
+
+                    _api_prefix = getattr(getattr(config, "api", None), "prefix", "")
+                    _web_url = _bot_runner.build_web_url(
+                        str(_bot_runner_config.public_base_url), _api_prefix
+                    )
+                    for _headless in (False, True):
+                        _mode = "headless" if _headless else "headed"
+                        logger.info(
+                            f"Running {_framework_name} in {_mode} mode with count=2"
+                        )
+                        _batch_id = _bot_runner.trigger_run(
+                            base_url=str(_bot_runner_config.url),
+                            api_key=_bot_runner_config.api_key.get_secret_value(),
+                            bot=_bot_runner_config.bot,
+                            driver_preset=_driver_preset,
+                            device_type=_bot_runner_config.device_type,
+                            web_url=_web_url,
+                            framework_name=_framework_name,
+                            request_timeout_sec=(
+                                _bot_runner_config.request_timeout_sec
+                            ),
+                            count=2,
+                            headless=_headless,
+                            busy_retry_count=_bot_runner_config.busy_retry_count,
+                            busy_backoff_initial_sec=(
+                                _bot_runner_config.busy_backoff_initial_sec
+                            ),
+                            busy_backoff_max_sec=(
+                                _bot_runner_config.busy_backoff_max_sec
+                            ),
+                        )
+                        _run_status = _bot_runner.wait_for_run(
+                            base_url=str(_bot_runner_config.url),
+                            api_key=_bot_runner_config.api_key.get_secret_value(),
+                            batch_id=_batch_id,
+                            poll_timeout_sec=_bot_runner_config.poll_timeout_sec,
+                            poll_interval_sec=_bot_runner_config.poll_interval_sec,
+                            request_timeout_sec=(
+                                _bot_runner_config.request_timeout_sec
+                            ),
+                        )
+                        if _run_status not in {"passed", "partial"}:
+                            logger.warning(
+                                f"bot-runner returned {_run_status} for {_framework_name} in {_mode} mode"
+                            )
+                except Exception as err:
+                    logger.error(
+                        f"Error running detection for {_framework_name}: {str(err)}"
+                    )
+                    payload_manager.update_task_status(
+                        _framework_order, TaskStatusEnum.FAILED
+                    )
+                    continue
+
+            while True:
+                if payload_manager.check_task_compliance(_framework_order):
+                    logger.info(
+                        f"Detection completed for {_framework_name} within timeout."
+                    )
+                    payload_manager.update_task_status(
+                        _framework_order, TaskStatusEnum.COMPLETED
+                    )
+                    break
+
+                _bot_timeout -= 1
+                if _bot_timeout <= 0:
+                    logger.warning(
+                        f"Detection for {_framework_name} timed out after {config.challenge.bot_timeout} seconds."
+                    )
+                    payload_manager.update_task_status(
+                        _framework_order, TaskStatusEnum.TIMED_OUT
+                    )
+                    break
+                time.sleep(1)
+        _score = payload_manager.calculate_score()
+        payload_manager.submitted_payloads["final_score"] = _score
+        logger.info(f"Final score calculated: {_score}")
+
+    except Exception as err:
+        if isinstance(err, BaseHTTPException):
+            raise
+        logger.error(f"Failed to score the miner output: {str(err)}!")
+        raise
+
+    return _score
+
+
+def get_results() -> dict:
+    global payload_manager
+    logger.info("Sending detection results...")
+
+    try:
+        _submission_report = payload_manager.get_submission_report()
+        if _submission_report:
+            logger.info("Returning detection results")
+            return _submission_report
+        else:
+            logger.warning("No detection results available")
+            return {}
+
+    except Exception as err:
+        logger.error(f"Error retrieving results: {str(err)}")
+        return {}
+
+
+def submit_payload(_payload: SubmissionPayloadsPM):
+    global payload_manager
+    try:
+        _final_results = _payload.get_final_results()
+        payload_manager.submit_task(
+            framework_names=_final_results,
+            payload=_payload.model_dump(),
+            headless_non_ua=_payload.headless_non_ua,
+        )
+    except Exception as err:
+        logger.error(f"Error submitting payload: {str(err)}")
+        raise
+
+
+@validate_call(config={"arbitrary_types_allowed": True})
+def get_web(request: Request) -> HTMLResponse:
+    global payload_manager
+    _current_task = payload_manager.current_task
+    if _current_task and _current_task["order_number"]:
+        _order_number = _current_task["order_number"]
+    else:
+        _order_number = 0
+    templates = Jinja2Templates(directory=str(_src_dir / "templates"))
+    _abs_result_endpoint = _bot_runner._join_url(
+        str(config.challenge.bot_runner.public_base_url), "/_payload"
+    )
+    logger.info(
+        f"serving web page at {_abs_result_endpoint} for order number {_order_number}"
+    )
+
+    html_response = templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "abs_result_endpoint": _abs_result_endpoint,
+            "abs_session_order_number": _order_number,
+            "asb_framework_names": [
+                fw.name for fw in config.challenge.framework_images
+            ],
+        },
+    )
+    return html_response
+
+
+__all__ = [
+    "get_task",
+    "get_web",
+    "score",
+    "get_results",
+]

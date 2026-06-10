@@ -5,7 +5,7 @@ from api.endpoints.challenge.schemas import PayloadPM, SubmissionPayloadsPM, _fr
 
 
 _ROOT = Path(__file__).resolve().parent.parent
-_TEMPLATE_DIR = _ROOT / "src" / "templates"
+_TEMPLATE_DIR = _ROOT / "src" / "abs_challenge" / "challenge" / "templates"
 
 
 def test_headless_detector_is_loaded_before_framework_detectors():

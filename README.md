@@ -1,73 +1,107 @@
-# Auto Browser Sniffer Challenge
+# ab-sniffer
 
-The **Auto Browser Sniffer Challenge** is a series designed to test the skills of participants in developing a browser SDK that can accurately detect automation frameworks and genuine human interaction on a webpage. The latest iteration, **AB Sniffer**, introduces a new modular architecture for detection, an updated set of target frameworks, and refined, more stringent evaluation criteria.
+This is a RedTeam Subnet's ab-sniffer repository.
 
-Participants are tasked with creating an script that can be injected on a website to automatically identify various automation frameworks (such as Nodriver, Seleniumbase, Puppeteerextra, Botasaurus, and others) and distinguish them from genuine human interaction. The challenge emphasizes reliable detection across multiple execution modes, including headless environments. During evaluation, each of the 9 target scenarios will be run multiple times in a randomized and shuffled order to prevent predictable patterns. Submissions are rigorously scored based on accuracy, consistency, and coverage, with a critical penalty applied for any false positives involving human interaction.
-
-The challenge infrastructure includes a `web endpoint` where each submission automatically sends its payload for evaluation, and a `score endpoint` for receiving the results. This score endpoint is secured using symmetric authentication.
-
-## ⚙️ How It Works
-
-1. **Miner Submits Detection Scripts**: The miner submits their detection scripts.
-2. **Challenger container**: Will call `auth key` with symmetric authentication.
-3. **Scripts are Loaded into a Web Page**: The submitted scripts are injected into a test web page where the evaluation will take place.
-4. **Randomized Scenarios are Run**: The system runs 9 different scenarios (8 automation frameworks + 1 human user) against the web page. This is repeated 3 times, and the order of the scenarios is randomized and shuffled in each set.
-5. **Payloads are Sent to Web Endpoint**: During each of the 27 test runs, a payload containing the detection results is automatically sent to the `web endpoint` for collection.
-6. **The Final Score is Returned**: After all 27 sessions are complete and the final score is calculated, the `/score` endpoint completes the process by returning the final score in the HTTP response to the original request.
+Documentation page: <https://docs.theredteam.io/latest/challenges/ab-sniffer>
 
 ## ✨ Features
 
-- SDK for browser type detection
-- Scoring based on accuracy of detection
-- API server for challenge interaction
-- Health check endpoint
-- Dockerfile for deployment
-- FastAPI
-- Web service
+- RedTeam Subnet challenge
+- Challenge module (Python package)
+- Challenge controller and manager
+- Challenge API (FastAPI)
 
 ---
 
-## 🛠 Installation
+## 🐤 Getting Started
 
-### 1. 📦 Install dependencies
+### 1. 🚧 Prerequisites
 
-[TIP] Skip this step, if you're going to use **docker** runtime
+- Install [**docker** and **docker compose**](https://docs.docker.com/engine/install)
+    - Docker image: [**redteamsubnet61/rest-abs-challenge**](https://hub.docker.com/r/redteamsubnet61/rest-abs-challenge)
+
+[OPTIONAL] For **DEVELOPMENT** environment:
+
+- Install **Python (>= v3.10)** and **pip (>= 23)**:
+    - **[RECOMMENDED] [Miniconda (v3)](https://www.anaconda.com/docs/getting-started/miniconda/install)**
+    - *[arm64/aarch64] [Miniforge (v3)](https://github.com/conda-forge/miniforge)*
+    - *[Python virtual environment] [venv](https://docs.python.org/3/library/venv.html)*
+- Install [**git**](https://git-scm.com/downloads)
+- Setup an [**SSH key**](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh)
+
+### 2. 📥 Download or clone the repository
+
+**2.1.** Prepare projects directory (if not exists):
 
 ```sh
-pip install -r ./requirements.txt
+# Create projects directory:
+mkdir -pv ~/workspaces/projects
+
+# Enter into projects directory:
+cd ~/workspaces/projects
 ```
 
-### 2. 🏁 Start the server
+**2.2.** Follow one of the below options **[A]**, **[B]** or **[C]**:
 
-#### Docker runtime
-
-**OPTION A.** Run with **docker compose**:
+**OPTION A.** Clone the repository:
 
 ```sh
-## 1. Configure 'compose.override.yml' file.
+git clone https://github.com/RedTeamSubnet/ab-sniffer.git && \
+    cd ab-sniffer
+```
 
-# Copy 'compose.override.[ENV].yml' file to 'compose.override.yml' file:
-cp -v ./templates/compose/compose.override.[ENV].yml ./compose.override.yml
-# For example, DEVELOPMENT environment:
+**OPTION B.** Clone the repository (for **DEVELOPMENT**: git + ssh key):
+
+```sh
+git clone git@github.com:RedTeamSubnet/ab-sniffer.git && \
+    cd ab-sniffer
+```
+
+**OPTION C.** Download source code:
+
+1. Download archived **zip** or **tar.gz** file from [**releases**](https://github.com/RedTeamSubnet/ab-sniffer/releases).
+2. Extract it into the projects directory.
+3. Enter into the project directory.
+
+#### [OPTIONAL] Install dependencies (for **DEVELOPMENT** environment)
+
+```sh
+# For DEVELOPMENT environment, install dependencies with pip:
+pip install -e .[dev]
+# Install pre-commit hooks:
+pre-commit install
+```
+
+### 3. 🌎 Configure environment variables
+
+[NOTE] Please, check **[environment variables](#-environment-variables)** section for more details.
+
+```sh
+# Copy '.env.example' file to '.env' file:
+cp -v ./.env.example ./.env
+# Edit environment variables to fit in your environment:
+nano ./.env
+```
+
+### 4. 🏁 Start the server
+
+```sh
+## OPTIONAL: Configure 'compose.override.yml' file.
+# For DEVELOPMENT environment:
 cp -v ./templates/compose/compose.override.dev.yml ./compose.override.yml
-# For example, STATGING or PRODUCTION environment:
-cp -v ./templates/compose/compose.override.prod.yml ./compose.override.yml
-
 # Edit 'compose.override.yml' file to fit in your environment:
 nano ./compose.override.yml
 
-
-## 2. Check docker compose configuration is valid:
+## 1. Check docker compose configuration is valid:
 ./compose.sh validate
 # Or:
 docker compose config
 
-
-## 3. Start docker compose:
+## 2. Start docker compose:
 ./compose.sh start -l
 # Or:
 docker compose up -d --remove-orphans --force-recreate && \
-    docker compose logs -f --tail 100
+    docker compose logs -f -n 100
 ```
 
 ### 5. ✅ Check server is running
@@ -75,16 +109,16 @@ docker compose up -d --remove-orphans --force-recreate && \
 Check with CLI (curl):
 
 ```sh
-# Send a ping request with 'curl' to API server and parse JSON response with 'jq':
-curl -s -k https://localhost:10001/ping | jq
+# Send a ping request with 'curl' to REST API server and parse JSON response with 'jq':
+curl -s http://localhost:10001/ping | jq
 ```
 
 Check with web browser:
 
-- Health check: <https://localhost:10001/health>
-- Swagger: <https://localhost:10001/docs>
-- Redoc: <https://localhost:10001/redoc>
-- OpenAPI JSON: <https://localhost:10001/openapi.json>
+- Health check: <http://localhost:10001/health>
+- Swagger: <http://localhost:10001/docs>
+- Redoc: <http://localhost:10001/redoc>
+- OpenAPI JSON: <http://localhost:10001/openapi.json>
 
 ### 6. 🛑 Stop the server
 
@@ -105,33 +139,35 @@ docker compose down --remove-orphans
 
 ### 🌎 Environment Variables
 
-[**`.env.example`**](https://github.com/RedTeamSubnet/RedTeam/blob/feat/webui-auto-challenge/redteam_core/challenge_pool/webui_auto/.env.example):
+[**`.env.example`**](./.env.example):
 
 ```sh
 ## --- Environment variable --- ##
 ENV=LOCAL
 DEBUG=false
+# TZ=UTC
+# PYTHONDONTWRITEBYTECODE=1
 
 
 ## -- API configs -- ##
-ABS_API_PORT=10001
-# ABS_API_LOGS_DIR="/var/log/rest.rt-abs-challenger"
-# ABS_API_DATA_DIR="/var/lib/rest.rt-abs-challenger"
-
-# ABS_API_VERSION="1"
-# ABS_API_PREFIX=""
-# ABS_API_DOCS_ENABLED=true
-# ABS_API_DOCS_OPENAPI_URL="{api_prefix}/openapi.json"
-# ABS_API_DOCS_DOCS_URL="{api_prefix}/docs"
-# ABS_API_DOCS_REDOC_URL="{api_prefix}/redoc"
-
-## -- Rewarding Service Endpoints & Auth -- ##
-ABS_WEB_ENDPOINT_URL="http://localhost:8000/web"
-ABS_SCORE_ENDPOINT_URL="http://localhost:8000/score"
-REWARDING_SECRET_KEY="your-strong-secret-key-here" # IMPORTANT: Change this to a strong, unique key
+ABS_CHALLENGE_API_PORT=10001
+# ABS_CHALLENGE_API_CONFIGS_DIR="/etc/rest-abs-challenge"
+# ABS_CHALLENGE_API_LOGS_DIR="/var/log/rest-abs-challenge"
+# ABS_CHALLENGE_API_DATA_DIR="/var/lib/rest-abs-challenge"
+# ABS_CHALLENGE_API_TMP_DIR="/tmp/rest-abs-challenge"
+# ABS_CHALLENGE_API_VERSION="1"
+# ABS_CHALLENGE_API_PREFIX=""
+# ABS_CHALLENGE_API_DOCS_ENABLED=true
+# ABS_CHALLENGE_API_DOCS_OPENAPI_URL="{api_prefix}/openapi.json"
+# ABS_CHALLENGE_API_DOCS_DOCS_URL="{api_prefix}/docs"
+# ABS_CHALLENGE_API_DOCS_REDOC_URL="{api_prefix}/redoc"
 ```
 
+---
+
 ## 🏗️ Build Docker Image
+
+Before building the docker image, make sure you have installed **docker** and **docker compose**.
 
 To build the docker image, run the following command:
 
@@ -142,10 +178,16 @@ To build the docker image, run the following command:
 docker compose build
 ```
 
+## 📚 Documentation
+
+- <https://docs.theredteam.io/latest/challenges>
+
 ---
 
 ## 📑 References
 
+- RedTeam Subnet: <https://www.theredteam.io>
+- Bittensor: <https://www.bittensor.com>
 - FastAPI - <https://fastapi.tiangolo.com>
 - Docker - <https://docs.docker.com>
 - Docker Compose - <https://docs.docker.com/compose>

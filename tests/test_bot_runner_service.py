@@ -92,8 +92,11 @@ def test_score_uses_bot_runner(monkeypatch):
     )
 
     assert result == 1.0
-    assert trigger_calls
-    assert trigger_calls[0]["bot"] == "aad-detect"
-    assert trigger_calls[0]["driver_preset"] == "dummy-local"
-    assert trigger_calls[0]["device_type"] == "linux"
-    assert trigger_calls[0]["web_url"] == "https://challenge.example/_web"
+    assert len(trigger_calls) == 2
+    assert [call["headless"] for call in trigger_calls] == [False, True]
+    assert [call["count"] for call in trigger_calls] == [2, 2]
+    for trigger_call in trigger_calls:
+        assert trigger_call["bot"] == "aad-detect"
+        assert trigger_call["driver_preset"] == "dummy-local"
+        assert trigger_call["device_type"] == "linux"
+        assert trigger_call["web_url"] == "https://challenge.example/_web"
