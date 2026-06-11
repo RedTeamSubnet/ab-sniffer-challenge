@@ -4,6 +4,7 @@ challenge:
   bot_timeout: 10
   human_timeout: 120
   human_count: 3
+  headless_max_failures: 3
   verification:
     endpoint: "http://challenge_server:8000/api/v1/verify"
     api_key: "super_secure_api_key"

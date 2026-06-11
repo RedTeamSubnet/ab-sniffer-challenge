@@ -17,9 +17,13 @@ _detection_template_dir = _src_dir / "templates" / "static" / "detections"
 _detection_paths: list[Path] = list(_detection_template_dir.glob("*.js"))
 _detection_files: list[dict[str, Any]] = []
 _frameworks_names: list[str] = [fw.name for fw in config.challenge.framework_images]
+_detection_file_names: set[str] = {
+    *(f"{framework_name}.js" for framework_name in _frameworks_names),
+    "headless.js",
+}
 try:
     for _detection_path in _detection_paths:
-        if _detection_path.stem in _frameworks_names:
+        if _detection_path.name in _detection_file_names:
             with open(_detection_path, "r") as _detection_file:
                 _detection_files.append(
                     {
@@ -90,17 +94,16 @@ class MinerOutput(BaseModel):
     def _check_detection_files(
         cls, val: list[DetectionFilePM]
     ) -> list[DetectionFilePM]:
-        if len(val) != len(_frameworks_names):
+        if len(val) != len(_detection_file_names):
             raise ValueError(
-                f"Number of submitted detection files ({len(val)}) does not match the expected number ({len(_frameworks_names)})!"
+                f"Number of submitted detection files ({len(val)}) does not match the expected number ({len(_detection_file_names)})!"
             )
 
         for _miner_file_pm in val:
-
-            if _miner_file_pm.file_name.split(".")[-1] != "js":
+            if Path(_miner_file_pm.file_name).suffix != ".js":
                 raise ValueError("File should be a JavaScript (.js) file!")
 
-            if _miner_file_pm.file_name.split(".")[0] not in _frameworks_names:
+            if _miner_file_pm.file_name not in _detection_file_names:
                 raise ValueError(
                     f"`{_miner_file_pm.file_name}` is not a valid detection file name!"
                 )
@@ -165,10 +168,10 @@ class SubmissionPayloadsPM(BaseModel):
         description="Order number of the submission.",
         examples=[0],
     )
-    headless_non_ua: bool = Field(
+    headless: bool = Field(
         ...,
-        title="Non-UA Headless Detected",
-        description="Indicates whether non-User-Agent headless signals were detected.",
+        title="Headless Detected",
+        description="Indicates whether headless browser signals were detected.",
         examples=[True],
     )
     model_config = {

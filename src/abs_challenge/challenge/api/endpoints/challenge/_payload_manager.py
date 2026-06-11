@@ -83,23 +83,31 @@ class PayloadManager:
         return
 
     def submit_task(
-        self, framework_names: list[str], payload: dict, headless_non_ua: bool
+        self, framework_names: list[str], payload: dict, headless: bool
     ) -> None:
         try:
             _expected_fm = self.expected_order[payload["order_number"]]
+            _expected_headless = self.tasks[payload["order_number"]]["headless"]
             _is_detected = _expected_fm in framework_names
             _is_collided = len(framework_names) > 1
+            _headless_failed = False
 
             if _expected_fm == "human":
                 _is_detected = True if len(framework_names) == 0 else False
                 _is_collided = True if len(framework_names) > 0 else False
+            else:
+                _headless_failed = (
+                    headless != _expected_headless or len(framework_names) == 0
+                )
 
             self.submitted_payloads[payload["order_number"]] = {
                 "expected_framework": _expected_fm,
+                "expected_headless": _expected_headless,
                 "submitted_framework": framework_names,
                 "detected": _is_detected,
                 "collided": _is_collided,
-                "headless_non_ua": headless_non_ua,
+                "headless": headless,
+                "headless_failed": _headless_failed,
                 "server_url": self.tasks[payload["order_number"]]["server_url"],
                 "device_type": self.tasks[payload["order_number"]]["device_type"],
             }
@@ -114,10 +122,24 @@ class PayloadManager:
 
         for submission in self.submitted_payloads.values():
             if submission["expected_framework"] == "human" and (
-                submission["collided"] or not submission["detected"]
+                submission["collided"]
+                or not submission["detected"]
+                or submission["headless"]
             ):
                 logger.warning("Couldn't detect human correctly, score is zero")
                 return 0.0
+
+        _headless_failures = sum(
+            1
+            for submission in self.submitted_payloads.values()
+            if submission["expected_framework"] != "human"
+            and submission["headless_failed"]
+        )
+        if _headless_failures > config.challenge.headless_max_failures:
+            logger.warning(
+                f"Headless detection failed {_headless_failures} times, score is zero"
+            )
+            return 0.0
 
         _correct_detections = sum(
             1 if not submission["collided"] else 0.1

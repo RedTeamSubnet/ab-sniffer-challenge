@@ -55,9 +55,7 @@ def score(
         _human_tasks = len(_all_tasks) - len(_driver_tasks)
         _headed = sum(1 for t in _driver_tasks if t["headless"] is False)
         _headless_total = sum(1 for t in _driver_tasks if t["headless"] is True)
-        _run_order = (
-            "shuffled" if _bot_runner_config.shuffle_runs else "deterministic"
-        )
+        _run_order = "shuffled" if _bot_runner_config.shuffle_runs else "deterministic"
         logger.info(
             f"Scoring schedule: {len(_all_tasks)} runs "
             f"({len(_driver_tasks)} driver [{_headed} headed / "
@@ -170,7 +168,7 @@ def submit_payload(_payload: SubmissionPayloadsPM):
         payload_manager.submit_task(
             framework_names=_final_results,
             payload=_payload.model_dump(),
-            headless_non_ua=_payload.headless_non_ua,
+            headless=_payload.headless,
         )
     except Exception as err:
         logger.error(f"Error submitting payload: {str(err)}")
@@ -199,7 +197,7 @@ def get_web(request: Request) -> HTMLResponse:
         context={
             "abs_result_endpoint": _abs_result_endpoint,
             "abs_session_order_number": _order_number,
-            "asb_framework_names": [
+            "abs_framework_names": [
                 fw.name for fw in config.challenge.framework_images
             ],
         },

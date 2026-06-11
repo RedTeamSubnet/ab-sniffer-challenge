@@ -69,6 +69,7 @@ class ChallengeConfig(FrozenBaseConfig):
     human_timeout: int = Field(default=120, ge=1)
     # Number of human-verification runs mixed into each scoring cycle.
     human_count: int = Field(default=1, ge=0)
+    headless_max_failures: int = Field(default=3, ge=0)
     framework_images: List[FrameworkImageConfig] = Field(...)
     bot_runner: BotRunnerConfig = Field(...)
 
