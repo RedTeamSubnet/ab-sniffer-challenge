@@ -7,6 +7,9 @@ from api.logger import logger
 from api.endpoints.challenge.schemas import TaskStatusEnum
 
 HUMAN_TASK_NAME = "human"
+FRAMEWORK_SCORE_WEIGHT = 0.9
+HEADLESS_SCORE_WEIGHT = 0.1
+HEADLESS_ALLOWED_MISSES = 3
 
 
 def build_run_schedule(
@@ -118,8 +121,23 @@ class PayloadManager:
         return
 
     def calculate_score(self) -> float:
-        _total_tasks = len(self.expected_order)
+        if not self._score_human():
+            return 0.0
 
+        framework_score = self._score_framework()
+        if framework_score == 0.0:
+            logger.warning("Framework score is zero, final score is zero")
+            return 0.0
+
+        headless_score = self._score_headless()
+        self.score = framework_score + headless_score
+        logger.info(
+            f"Final score calculated: {self.score} "
+            f"(framework={framework_score}, headless={headless_score})"
+        )
+        return self.score
+
+    def _score_human(self) -> bool:
         for submission in self.submitted_payloads.values():
             if submission["expected_framework"] == "human" and (
                 submission["collided"]
@@ -127,32 +145,57 @@ class PayloadManager:
                 or submission["headless"]
             ):
                 logger.warning("Couldn't detect human correctly, score is zero")
-                return 0.0
+                return False
+        return True
 
-        _headless_failures = sum(
+    def _score_framework(self) -> float:
+        framework_weights = {
+            framework.name: framework.weight
+            for framework in config.challenge.framework_images
+        }
+        total_weight = sum(framework_weights.values())
+        if total_weight == 0:
+            logger.warning("No framework weights found, framework score is zero")
+            return 0.0
+
+        weighted_accuracy = 0.0
+        for framework_name, framework_weight in framework_weights.items():
+            expected_count = sum(
+                1
+                for expected_framework in self.expected_order.values()
+                if expected_framework == framework_name
+            )
+            if expected_count == 0:
+                continue
+
+            earned_points = sum(
+                0.1 if submission["collided"] else 1.0
+                for submission in self.submitted_payloads.values()
+                if submission["expected_framework"] == framework_name
+                and submission["detected"]
+            )
+            framework_accuracy = earned_points / expected_count
+            weighted_accuracy += framework_accuracy * framework_weight
+            logger.info(
+                f"Framework {framework_name}: accuracy={framework_accuracy}, "
+                f"weight={framework_weight}"
+            )
+
+        return FRAMEWORK_SCORE_WEIGHT * (weighted_accuracy / total_weight)
+
+    def _score_headless(self) -> float:
+        headless_failures = sum(
             1
             for submission in self.submitted_payloads.values()
-            if submission["expected_framework"] != "human"
+            if submission["expected_framework"] != HUMAN_TASK_NAME
             and submission["headless_failed"]
         )
-        if _headless_failures > config.challenge.headless_max_failures:
-            logger.warning(
-                f"Headless detection failed {_headless_failures} times, score is zero"
-            )
-            return 0.0
-
-        _correct_detections = sum(
-            1 if not submission["collided"] else 0.1
-            for submission in self.submitted_payloads.values()
-            if submission["detected"]
+        penalty = HEADLESS_SCORE_WEIGHT / HEADLESS_ALLOWED_MISSES
+        score = max(0.0, HEADLESS_SCORE_WEIGHT - (headless_failures * penalty))
+        logger.info(
+            f"Headless detection: failures={headless_failures}, score={score}"
         )
-
-        if _total_tasks == 0:
-            logger.warning("No tasks found, score is zero")
-            return 0.0
-
-        self.score = _correct_detections / _total_tasks
-        return self.score
+        return score
 
     def gen_ran_framework_sequence(self) -> None:
         _bot_runner_cfg = config.challenge.bot_runner

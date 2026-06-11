@@ -12,6 +12,7 @@ class FrameworkImageConfig(BaseModel):
     image: str = Field(...)
     # bot-runner driver preset used to launch this framework.
     preset: str = Field(..., min_length=1)
+    weight: float = Field(default=1.0, gt=0)
 
 
 class RunCountsConfig(BaseModel):
@@ -69,7 +70,6 @@ class ChallengeConfig(FrozenBaseConfig):
     human_timeout: int = Field(default=120, ge=1)
     # Number of human-verification runs mixed into each scoring cycle.
     human_count: int = Field(default=1, ge=0)
-    headless_max_failures: int = Field(default=3, ge=0)
     framework_images: List[FrameworkImageConfig] = Field(...)
     bot_runner: BotRunnerConfig = Field(...)
 
