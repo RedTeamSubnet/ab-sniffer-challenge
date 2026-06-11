@@ -8,45 +8,6 @@ from api.endpoints.challenge.schemas import TaskStatusEnum
 
 HUMAN_TASK_NAME = "human"
 
-# Use OS entropy (CSPRNG) for the schedule so the run order/mode cannot be
-# predicted by a miner even though this challenge code is public. Security here
-# rests on unpredictable entropy, not on the algorithm being secret: the
-# order_number -> framework mapping (`expected_order`) is the real secret and is
-# never sent to the detection page.
-_schedule_rng = random.SystemRandom()
-
-
-def _spread_by_name(units: list[dict]) -> list[dict]:
-    """Order units so the same framework never lands in two adjacent slots.
-
-    Greedy by most-remaining count with a randomized tie-break: this is the
-    standard arrangement that guarantees no two consecutive items share a name
-    whenever it is feasible (max per-name count <= ceil(n / 2)), while staying
-    unpredictable across cycles. If a name is so dominant that no valid spread
-    exists, it degrades gracefully by allowing an adjacency rather than looping.
-    """
-    buckets: dict[str, list[dict]] = defaultdict(list)
-    for unit in units:
-        buckets[unit["name"]].append(unit)
-    # Randomize the headed/headless order within each framework's bucket.
-    for bucket in buckets.values():
-        _schedule_rng.shuffle(bucket)
-
-    ordered: list[dict] = []
-    previous_name: str | None = None
-    total = len(units)
-
-    while len(ordered) < total:
-        available = [name for name, bucket in buckets.items() if bucket]
-        candidates = [name for name in available if name != previous_name] or available
-        most_remaining = max(len(buckets[name]) for name in candidates)
-        top = [name for name in candidates if len(buckets[name]) == most_remaining]
-        chosen = _schedule_rng.choice(top)
-        ordered.append(buckets[chosen].pop())
-        previous_name = chosen
-
-    return ordered
-
 
 def build_run_schedule(
     framework_names: list[str],
@@ -75,7 +36,7 @@ def build_run_schedule(
         units.append({"name": HUMAN_TASK_NAME, "headless": None})
 
     if shuffle:
-        return _spread_by_name(units)
+        random.shuffle(units)
     return units
 
 

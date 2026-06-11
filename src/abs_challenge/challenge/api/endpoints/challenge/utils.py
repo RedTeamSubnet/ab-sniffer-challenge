@@ -34,8 +34,10 @@ def wait_for_task_completion(
     payload_manager,
     framework_order: int,
     framework_name: str,
-    bot_timeout: int,
-):
+    timeout: int,
+) -> bool:
+    configured_timeout = timeout
+
     while True:
         if payload_manager.check_task_compliance(framework_order):
             logger.info(
@@ -44,19 +46,19 @@ def wait_for_task_completion(
             payload_manager.update_task_status(
                 framework_order, TaskStatusEnum.COMPLETED
             )
-            break
+            return True
 
-        bot_timeout -= 1
-        if bot_timeout <= 0:
+        timeout -= 1
+        if timeout <= 0:
             logger.warning(
-                f"Detection for {framework_name} timed out after {config.challenge.bot_timeout} seconds."
+                f"Detection for {framework_name} timed out after "
+                f"{configured_timeout} seconds."
             )
             payload_manager.update_task_status(
                 framework_order, TaskStatusEnum.TIMED_OUT
             )
-            break
+            return False
         time.sleep(1)
-    return
 
 
 def run_verification_webhook():
@@ -95,5 +97,6 @@ def run_verification_webhook():
 
 __all__ = [
     "copy_detection_files",
+    "wait_for_task_completion",
     "run_verification_webhook",
 ]
