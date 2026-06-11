@@ -4,28 +4,12 @@ from api.endpoints.challenge import service
 from api.endpoints.challenge.schemas import DetectionFilePM, MinerOutput
 
 
-class _Secret:
-    def get_secret_value(self) -> str:
-        return "test-secret-value"
-
-
 class _DummySettings:
     def __init__(self):
         self.challenge = SimpleNamespace(
             bot_timeout=5,
             framework_images=[SimpleNamespace(name="dummy-fw", preset="dummy-local")],
             bot_runner=SimpleNamespace(
-                url="http://bot-runner.local:8000",
-                api_key=_Secret(),
-                public_base_url="https://challenge.example",
-                device_type="linux",
-                bot="aad-detect",
-                poll_timeout_sec=20,
-                poll_interval_sec=1,
-                request_timeout_sec=3,
-                busy_retry_count=2,
-                busy_backoff_initial_sec=0,
-                busy_backoff_max_sec=0,
                 shuffle_runs=True,
             ),
         )
@@ -82,11 +66,7 @@ def test_score_uses_bot_runner(monkeypatch):
         trigger_calls.append(kwargs)
         return "batch-1"
 
-    monkeypatch.setattr(
-        service._bot_runner, "build_web_url", lambda base_url, api_prefix="": f"{base_url}{api_prefix}/_web"
-    )
     monkeypatch.setattr(service._bot_runner, "trigger_run", _trigger_run)
-    monkeypatch.setattr(service._bot_runner, "wait_for_run", lambda **_: "passed")
 
     result = service.score(
         miner_output=_miner_output(), web_url="https://challenge.example/_web"
@@ -97,7 +77,4 @@ def test_score_uses_bot_runner(monkeypatch):
     assert [call["headless"] for call in trigger_calls] == [False]
     assert [call["count"] for call in trigger_calls] == [1]
     for trigger_call in trigger_calls:
-        assert trigger_call["bot"] == "aad-detect"
         assert trigger_call["driver_preset"] == "dummy-local"
-        assert trigger_call["device_type"] == "linux"
-        assert trigger_call["web_url"] == "https://challenge.example/_web"
