@@ -69,10 +69,6 @@ class ChallengeConfig(FrozenBaseConfig):
     human_timeout: int = Field(default=120, ge=1)
     # Number of human-verification runs mixed into each scoring cycle.
     human_count: int = Field(default=1, ge=0)
-    # Legacy: previously multiplied every framework + human. Superseded by
-    # bot_runner.run_counts (drivers) and human_count (human). Kept optional for
-    # backward compatibility with existing config files.
-    repeated_framework_count: int = Field(default=1, ge=1)
     framework_images: List[FrameworkImageConfig] = Field(...)
     bot_runner: BotRunnerConfig = Field(...)
 
