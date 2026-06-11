@@ -97,12 +97,18 @@ def score(
                     logger.info(
                         f"Running {_framework_name} in {_mode} mode (order {_framework_order})"
                     )
-                    _bot_runner.trigger_run(
+                    _batch_id = _bot_runner.trigger_run(
                         driver_preset=_driver_preset,
                         framework_name=_framework_name,
                         count=1,
                         headless=_headless,
                     )
+                    _run_status = _bot_runner.wait_for_run(_batch_id)
+                    if _run_status not in {"passed", "partial"}:
+                        logger.warning(
+                            f"bot-runner returned {_run_status} for "
+                            f"{_framework_name} in {_mode} mode"
+                        )
                 except Exception as err:
                     logger.error(
                         f"Error running detection for {_framework_name}: {str(err)}"

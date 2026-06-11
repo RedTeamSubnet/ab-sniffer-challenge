@@ -6,6 +6,7 @@ import requests
 from api.config import config
 from api.logger import logger
 
+_TERMINAL_STATUSES = {"passed", "failed", "partial", "error"}
 
 def _auth_headers(api_key: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {api_key}"}
@@ -81,6 +82,35 @@ def trigger_run(
     raise RuntimeError("unreachable bot-runner retry state")
 
 
+def wait_for_run(
+    batch_id: str,
+) -> str:
+    """Check bot-runner status up to three times."""
+    bot_runner_config = config.challenge.bot_runner
+    url = _join_url(str(bot_runner_config.url), f"/api/runs/{batch_id}")
+
+    for attempt in range(3):
+        try:
+            response = requests.get(
+                url,
+                headers=_auth_headers(bot_runner_config.api_key.get_secret_value()),
+                timeout=bot_runner_config.request_timeout_sec,
+            )
+            response.raise_for_status()
+            status = str(response.json().get("status", ""))
+            if status in _TERMINAL_STATUSES:
+                return status
+        except requests.RequestException:
+            if attempt == 2:
+                raise
+
+        if attempt < 2:
+            time.sleep(2**attempt)
+
+    return "timeout"
+
+
 __all__ = [
     "trigger_run",
+    "wait_for_run",
 ]

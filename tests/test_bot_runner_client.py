@@ -127,3 +127,38 @@ def test_trigger_run_does_not_log_api_key(caplog):
     )
 
     assert "secret-token" not in caplog.text
+
+
+def test_wait_for_run_returns_terminal_status(monkeypatch):
+    responses = iter(
+        [
+            DummyResponse(200, {"status": "running"}),
+            DummyResponse(200, {"status": "passed"}),
+        ]
+    )
+    sleeps = []
+    monkeypatch.setattr(_bot_runner.requests, "get", lambda *_, **__: next(responses))
+    monkeypatch.setattr(_bot_runner.time, "sleep", sleeps.append)
+
+    status = _bot_runner.wait_for_run("batch-123")
+
+    assert status == "passed"
+    assert sleeps == [1]
+
+
+def test_wait_for_run_returns_timeout_after_three_attempts(monkeypatch):
+    calls = []
+    sleeps = []
+
+    def _get(*args, **kwargs):
+        calls.append((args, kwargs))
+        return DummyResponse(200, {"status": "running"})
+
+    monkeypatch.setattr(_bot_runner.requests, "get", _get)
+    monkeypatch.setattr(_bot_runner.time, "sleep", sleeps.append)
+
+    status = _bot_runner.wait_for_run("batch-123")
+
+    assert status == "timeout"
+    assert len(calls) == 3
+    assert sleeps == [1, 2]

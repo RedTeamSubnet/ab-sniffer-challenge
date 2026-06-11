@@ -61,12 +61,18 @@ def test_score_uses_bot_runner(monkeypatch):
     _patch_common_score_helpers(monkeypatch, payload_manager)
 
     trigger_calls = []
+    wait_calls = []
 
     def _trigger_run(**kwargs):
         trigger_calls.append(kwargs)
         return "batch-1"
 
     monkeypatch.setattr(service._bot_runner, "trigger_run", _trigger_run)
+    monkeypatch.setattr(
+        service._bot_runner,
+        "wait_for_run",
+        lambda batch_id: wait_calls.append(batch_id) or "passed",
+    )
 
     result = service.score(
         miner_output=_miner_output(), web_url="https://challenge.example/_web"
@@ -74,6 +80,7 @@ def test_score_uses_bot_runner(monkeypatch):
 
     assert result == 1.0
     assert len(trigger_calls) == 1
+    assert wait_calls == ["batch-1"]
     assert [call["headless"] for call in trigger_calls] == [False]
     assert [call["count"] for call in trigger_calls] == [1]
     for trigger_call in trigger_calls:
