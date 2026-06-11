@@ -24,6 +24,7 @@ class _DummyPayloadManager:
             0: {
                 "name": "dummy-fw",
                 "headless": False,
+                "server_url": "http://runner-2:8000",
                 "order_number": 0,
             }
         }
@@ -71,7 +72,10 @@ def test_score_uses_bot_runner(monkeypatch):
     monkeypatch.setattr(
         service._bot_runner,
         "wait_for_run",
-        lambda batch_id: wait_calls.append(batch_id) or "passed",
+        lambda batch_id, server_url: wait_calls.append(
+            (batch_id, server_url)
+        )
+        or "passed",
     )
 
     result = service.score(
@@ -80,8 +84,9 @@ def test_score_uses_bot_runner(monkeypatch):
 
     assert result == 1.0
     assert len(trigger_calls) == 1
-    assert wait_calls == ["batch-1"]
+    assert wait_calls == [("batch-1", "http://runner-2:8000")]
     assert [call["headless"] for call in trigger_calls] == [False]
     assert [call["count"] for call in trigger_calls] == [1]
     for trigger_call in trigger_calls:
         assert trigger_call["driver_preset"] == "dummy-local"
+        assert trigger_call["server_url"] == "http://runner-2:8000"

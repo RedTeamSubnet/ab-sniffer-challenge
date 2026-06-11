@@ -40,13 +40,11 @@ class VerificationConfig(FrozenBaseConfig):
 
 
 class BotRunnerConfig(FrozenBaseConfig):
-    url: AnyHttpUrl = Field(...)
+    urls: List[AnyHttpUrl] = Field(..., min_length=1)
     api_key: SecretStr = Field(..., min_length=12, max_length=128)
     public_base_url: AnyHttpUrl = Field(...)
     device_type: str = Field(default="linux", min_length=1, max_length=32)
     bot: str = Field(default="aad-detect", min_length=1, max_length=128)
-    poll_timeout_sec: int = Field(default=180, ge=1)
-    poll_interval_sec: int = Field(default=2, ge=1)
     request_timeout_sec: int = Field(default=15, ge=1)
     busy_retry_count: int = Field(default=3, ge=0, le=10)
     busy_backoff_initial_sec: float = Field(default=0.5, ge=0.0)

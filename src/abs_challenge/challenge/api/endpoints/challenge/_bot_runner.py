@@ -18,6 +18,7 @@ def _join_url(base_url: str, path: str) -> str:
 
 def trigger_run(
     *,
+    server_url: str,
     driver_preset: str,
     framework_name: str,
     count: int = 1,
@@ -48,7 +49,7 @@ def trigger_run(
             "count": count,
         },
     }
-    url = _join_url(str(bot_runner_config.url), "/api/runs")
+    url = _join_url(server_url, "/api/runs")
     max_attempts = bot_runner_config.busy_retry_count + 1
     backoff = bot_runner_config.busy_backoff_initial_sec
 
@@ -84,10 +85,11 @@ def trigger_run(
 
 def wait_for_run(
     batch_id: str,
+    server_url: str,
 ) -> str:
     """Check bot-runner status up to three times."""
     bot_runner_config = config.challenge.bot_runner
-    url = _join_url(str(bot_runner_config.url), f"/api/runs/{batch_id}")
+    url = _join_url(server_url, f"/api/runs/{batch_id}")
 
     for attempt in range(3):
         try:

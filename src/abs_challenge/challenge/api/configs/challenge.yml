@@ -39,13 +39,12 @@ challenge:
       image: redteamsubnet61/puppeteerextra@sha256:e358795bddad05cf3aa2f06d112aff729bbf2c803e936a6429fd7f55bea1aa4d
       preset: "puppeteer-extra-local"
   bot_runner:
-    url: "http://bot-runner:8080"
+    urls:
+      - "http://bot-runner:8080"
     api_key: "bot_runner_api_key"
     public_base_url: "http://challenge_server:10001"
     device_type: "linux"
     bot: "aad-detect"
-    poll_timeout_sec: 180
-    poll_interval_sec: 2
     request_timeout_sec: 15
     busy_retry_count: 3
     busy_backoff_initial_sec: 0.5

@@ -11,6 +11,7 @@ HUMAN_TASK_NAME = "human"
 
 def build_run_schedule(
     framework_names: list[str],
+    server_urls: list[str],
     *,
     headed_count: int,
     headless_count: int,
@@ -20,20 +21,36 @@ def build_run_schedule(
     """Build the per-run task schedule for one scoring cycle.
 
     Each framework contributes ``headed_count`` headed runs and
-    ``headless_count`` headless runs; ``human_count`` human-verification runs are
-    appended. Every run is an independent unit (its own scoring slot). When
-    ``shuffle`` is true the units are interleaved so neither the framework nor the
-    mode follows a predictable order and the same framework is never adjacent;
-    when false they are emitted deterministically for debugging.
+    ``headless_count`` headless runs on every configured server. Human runs are
+    appended once and are not assigned to a bot-runner server.
     """
     units: list[dict] = []
     for name in framework_names:
-        for _ in range(headed_count):
-            units.append({"name": name, "headless": False})
-        for _ in range(headless_count):
-            units.append({"name": name, "headless": True})
+        for server_url in server_urls:
+            for _ in range(headed_count):
+                units.append(
+                    {
+                        "name": name,
+                        "headless": False,
+                        "server_url": server_url,
+                    }
+                )
+            for _ in range(headless_count):
+                units.append(
+                    {
+                        "name": name,
+                        "headless": True,
+                        "server_url": server_url,
+                    }
+                )
     for _ in range(human_count):
-        units.append({"name": HUMAN_TASK_NAME, "headless": None})
+        units.append(
+            {
+                "name": HUMAN_TASK_NAME,
+                "headless": None,
+                "server_url": None,
+            }
+        )
 
     if shuffle:
         random.shuffle(units)
@@ -80,6 +97,7 @@ class PayloadManager:
                 "detected": _is_detected,
                 "collided": _is_collided,
                 "headless_non_ua": headless_non_ua,
+                "server_url": self.tasks[payload["order_number"]]["server_url"],
             }
 
         except Exception as err:
@@ -113,9 +131,11 @@ class PayloadManager:
     def gen_ran_framework_sequence(self) -> None:
         _bot_runner_cfg = config.challenge.bot_runner
         _framework_names = [fw.name for fw in config.challenge.framework_images]
+        _server_urls = [str(url) for url in _bot_runner_cfg.urls]
 
         _schedule = build_run_schedule(
             _framework_names,
+            _server_urls,
             headed_count=_bot_runner_cfg.run_counts.headed,
             headless_count=_bot_runner_cfg.run_counts.headless,
             human_count=config.challenge.human_count,
@@ -127,6 +147,7 @@ class PayloadManager:
             self.tasks[_index] = {
                 "name": _unit["name"],
                 "headless": _unit["headless"],
+                "server_url": _unit["server_url"],
                 "order_number": _index,
                 "status": TaskStatusEnum.CREATED,
             }

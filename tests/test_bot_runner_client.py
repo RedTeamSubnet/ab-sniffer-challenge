@@ -59,6 +59,7 @@ def test_trigger_run_posts_authenticated_request_and_returns_batch_id():
     session = make_session(DummyResponse(202, {"batch_id": "batch-123"}))
 
     batch_id = _bot_runner.trigger_run(
+        server_url="http://runner-2:8000",
         driver_preset="playwright-local",
         framework_name="playwright",
         session=session,
@@ -68,7 +69,7 @@ def test_trigger_run_posts_authenticated_request_and_returns_batch_id():
     session.post.assert_called_once()
     url = session.post.call_args.args[0]
     kwargs = session.post.call_args.kwargs
-    assert url == "http://runner:8000/api/runs"
+    assert url == "http://runner-2:8000/api/runs"
     assert kwargs["headers"] == {"Authorization": "Bearer secret-token"}
     assert kwargs["timeout"] == 3
     assert kwargs["json"]["bot"] == "aad-detect"
@@ -94,6 +95,7 @@ def test_trigger_run_retries_429_with_backoff(monkeypatch):
     monkeypatch.setattr(_bot_runner.time, "sleep", sleeps.append)
 
     batch_id = _bot_runner.trigger_run(
+        server_url="http://runner:8000",
         driver_preset="playwright-local",
         framework_name="playwright",
         session=session,
@@ -109,6 +111,7 @@ def test_trigger_run_does_not_retry_device_mismatch_409():
 
     with pytest.raises(requests.HTTPError):
         _bot_runner.trigger_run(
+            server_url="http://runner:8000",
             driver_preset="playwright-local",
             framework_name="playwright",
             session=session,
@@ -121,6 +124,7 @@ def test_trigger_run_does_not_log_api_key(caplog):
     session = make_session(DummyResponse(202, {"batch_id": "batch-123"}))
 
     _bot_runner.trigger_run(
+        server_url="http://runner:8000",
         driver_preset="playwright-local",
         framework_name="playwright",
         session=session,
@@ -140,7 +144,10 @@ def test_wait_for_run_returns_terminal_status(monkeypatch):
     monkeypatch.setattr(_bot_runner.requests, "get", lambda *_, **__: next(responses))
     monkeypatch.setattr(_bot_runner.time, "sleep", sleeps.append)
 
-    status = _bot_runner.wait_for_run("batch-123")
+    status = _bot_runner.wait_for_run(
+        "batch-123",
+        server_url="http://runner-2:8000",
+    )
 
     assert status == "passed"
     assert sleeps == [1]
@@ -157,8 +164,12 @@ def test_wait_for_run_returns_timeout_after_three_attempts(monkeypatch):
     monkeypatch.setattr(_bot_runner.requests, "get", _get)
     monkeypatch.setattr(_bot_runner.time, "sleep", sleeps.append)
 
-    status = _bot_runner.wait_for_run("batch-123")
+    status = _bot_runner.wait_for_run(
+        "batch-123",
+        server_url="http://runner-2:8000",
+    )
 
     assert status == "timeout"
     assert len(calls) == 3
     assert sleeps == [1, 2]
+    assert calls[0][0][0] == "http://runner-2:8000/api/runs/batch-123"
