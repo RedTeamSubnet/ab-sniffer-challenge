@@ -70,6 +70,7 @@ def score(
             _framework_order = _framework["order_number"]
             _headless = _framework["headless"]
             _server_url = _framework["server_url"]
+            _device_type = _framework["device_type"]
             payload_manager.current_task = _framework
             if _framework_name == "human":
                 logger.warning(
@@ -97,10 +98,11 @@ def score(
                     _mode = "headless" if _headless else "headed"
                     logger.info(
                         f"Running {_framework_name} in {_mode} mode on "
-                        f"{_server_url} (order {_framework_order})"
+                        f"{_server_url} ({_device_type}, order {_framework_order})"
                     )
                     _batch_id = _bot_runner.trigger_run(
                         server_url=_server_url,
+                        device_type=_device_type,
                         driver_preset=_driver_preset,
                         framework_name=_framework_name,
                         count=1,

@@ -39,11 +39,15 @@ class VerificationConfig(FrozenBaseConfig):
     model_config = SettingsConfigDict(env_prefix=f"{ENV_PREFIX_CHALLENGE}VERIFICATION_")
 
 
+class BotRunnerServerConfig(BaseModel):
+    url: AnyHttpUrl = Field(...)
+    device_type: str = Field(..., min_length=1, max_length=32)
+
+
 class BotRunnerConfig(FrozenBaseConfig):
-    urls: List[AnyHttpUrl] = Field(..., min_length=1)
+    servers: List[BotRunnerServerConfig] = Field(..., min_length=1)
     api_key: SecretStr = Field(..., min_length=12, max_length=128)
     public_base_url: AnyHttpUrl = Field(...)
-    device_type: str = Field(default="linux", min_length=1, max_length=32)
     bot: str = Field(default="aad-detect", min_length=1, max_length=128)
     request_timeout_sec: int = Field(default=15, ge=1)
     busy_retry_count: int = Field(default=3, ge=0, le=10)
@@ -80,6 +84,7 @@ class ChallengeConfig(FrozenBaseConfig):
 __all__ = [
     "FrameworkImageConfig",
     "RunCountsConfig",
+    "BotRunnerServerConfig",
     "ChallengeConfig",
     "VerificationConfig",
     "BotRunnerConfig",

@@ -19,6 +19,7 @@ def _join_url(base_url: str, path: str) -> str:
 def trigger_run(
     *,
     server_url: str,
+    device_type: str,
     driver_preset: str,
     framework_name: str,
     count: int = 1,
@@ -39,7 +40,7 @@ def trigger_run(
     payload: dict[str, Any] = {
         "bot": bot_runner_config.bot,
         "driver_preset": driver_preset,
-        "device_type": bot_runner_config.device_type,
+        "device_type": device_type,
         "url": web_url,
         "count": count,
         "headless": headless,

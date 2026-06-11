@@ -25,6 +25,7 @@ class _DummyPayloadManager:
                 "name": "dummy-fw",
                 "headless": False,
                 "server_url": "http://runner-2:8000",
+                "device_type": "mac",
                 "order_number": 0,
             }
         }
@@ -90,3 +91,4 @@ def test_score_uses_bot_runner(monkeypatch):
     for trigger_call in trigger_calls:
         assert trigger_call["driver_preset"] == "dummy-local"
         assert trigger_call["server_url"] == "http://runner-2:8000"
+        assert trigger_call["device_type"] == "mac"

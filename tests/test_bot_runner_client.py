@@ -25,7 +25,6 @@ def bot_runner_config(monkeypatch):
                     api_key=_Secret(),
                     public_base_url="http://challenge:10001",
                     bot="aad-detect",
-                    device_type="linux",
                     request_timeout_sec=3,
                     busy_retry_count=3,
                     busy_backoff_initial_sec=0.5,
@@ -60,6 +59,7 @@ def test_trigger_run_posts_authenticated_request_and_returns_batch_id():
 
     batch_id = _bot_runner.trigger_run(
         server_url="http://runner-2:8000",
+        device_type="windows",
         driver_preset="playwright-local",
         framework_name="playwright",
         session=session,
@@ -75,7 +75,7 @@ def test_trigger_run_posts_authenticated_request_and_returns_batch_id():
     assert kwargs["json"]["bot"] == "aad-detect"
     assert kwargs["json"]["driver_preset"] == "playwright-local"
     assert kwargs["json"]["url"] == "http://challenge:10001/_web"
-    assert kwargs["json"]["device_type"] == "linux"
+    assert kwargs["json"]["device_type"] == "windows"
     assert kwargs["json"]["count"] == 1
     assert kwargs["json"]["headless"] is True
     assert kwargs["json"]["metadata"] == {
@@ -96,6 +96,7 @@ def test_trigger_run_retries_429_with_backoff(monkeypatch):
 
     batch_id = _bot_runner.trigger_run(
         server_url="http://runner:8000",
+        device_type="linux",
         driver_preset="playwright-local",
         framework_name="playwright",
         session=session,
@@ -112,6 +113,7 @@ def test_trigger_run_does_not_retry_device_mismatch_409():
     with pytest.raises(requests.HTTPError):
         _bot_runner.trigger_run(
             server_url="http://runner:8000",
+            device_type="mac",
             driver_preset="playwright-local",
             framework_name="playwright",
             session=session,
@@ -125,6 +127,7 @@ def test_trigger_run_does_not_log_api_key(caplog):
 
     _bot_runner.trigger_run(
         server_url="http://runner:8000",
+        device_type="linux",
         driver_preset="playwright-local",
         framework_name="playwright",
         session=session,

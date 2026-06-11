@@ -11,7 +11,7 @@ HUMAN_TASK_NAME = "human"
 
 def build_run_schedule(
     framework_names: list[str],
-    server_urls: list[str],
+    servers: list[dict],
     *,
     headed_count: int,
     headless_count: int,
@@ -26,13 +26,14 @@ def build_run_schedule(
     """
     units: list[dict] = []
     for name in framework_names:
-        for server_url in server_urls:
+        for server in servers:
             for _ in range(headed_count):
                 units.append(
                     {
                         "name": name,
                         "headless": False,
-                        "server_url": server_url,
+                        "server_url": server["url"],
+                        "device_type": server["device_type"],
                     }
                 )
             for _ in range(headless_count):
@@ -40,7 +41,8 @@ def build_run_schedule(
                     {
                         "name": name,
                         "headless": True,
-                        "server_url": server_url,
+                        "server_url": server["url"],
+                        "device_type": server["device_type"],
                     }
                 )
     for _ in range(human_count):
@@ -49,6 +51,7 @@ def build_run_schedule(
                 "name": HUMAN_TASK_NAME,
                 "headless": None,
                 "server_url": None,
+                "device_type": None,
             }
         )
 
@@ -98,6 +101,7 @@ class PayloadManager:
                 "collided": _is_collided,
                 "headless_non_ua": headless_non_ua,
                 "server_url": self.tasks[payload["order_number"]]["server_url"],
+                "device_type": self.tasks[payload["order_number"]]["device_type"],
             }
 
         except Exception as err:
@@ -131,11 +135,17 @@ class PayloadManager:
     def gen_ran_framework_sequence(self) -> None:
         _bot_runner_cfg = config.challenge.bot_runner
         _framework_names = [fw.name for fw in config.challenge.framework_images]
-        _server_urls = [str(url) for url in _bot_runner_cfg.urls]
+        _servers = [
+            {
+                "url": str(server.url),
+                "device_type": server.device_type,
+            }
+            for server in _bot_runner_cfg.servers
+        ]
 
         _schedule = build_run_schedule(
             _framework_names,
-            _server_urls,
+            _servers,
             headed_count=_bot_runner_cfg.run_counts.headed,
             headless_count=_bot_runner_cfg.run_counts.headless,
             human_count=config.challenge.human_count,
@@ -148,6 +158,7 @@ class PayloadManager:
                 "name": _unit["name"],
                 "headless": _unit["headless"],
                 "server_url": _unit["server_url"],
+                "device_type": _unit["device_type"],
                 "order_number": _index,
                 "status": TaskStatusEnum.CREATED,
             }
