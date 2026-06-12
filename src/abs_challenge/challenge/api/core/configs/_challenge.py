@@ -9,8 +9,6 @@ from ._base import FrozenBaseConfig
 
 class FrameworkImageConfig(BaseModel):
     name: str = Field(...)
-    image: str = Field(...)
-    # bot-runner driver preset used to launch this framework.
     preset: str = Field(..., min_length=1)
     weight: float = Field(default=1.0, gt=0)
 

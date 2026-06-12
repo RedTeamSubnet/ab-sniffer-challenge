@@ -64,19 +64,27 @@ def test_score_uses_bot_runner(monkeypatch):
 
     trigger_calls = []
     wait_calls = []
+    call_order = []
 
     def _trigger_run(**kwargs):
+        call_order.append("trigger_run")
         trigger_calls.append(kwargs)
         return "batch-1"
 
     monkeypatch.setattr(service._bot_runner, "trigger_run", _trigger_run)
     monkeypatch.setattr(
+        service.ch_utils,
+        "wait_for_task_completion",
+        lambda **_: call_order.append("wait_for_task_completion") or True,
+    )
+    monkeypatch.setattr(
         service._bot_runner,
         "wait_for_run",
-        lambda batch_id, server_url: wait_calls.append(
-            (batch_id, server_url)
-        )
-        or "passed",
+        lambda batch_id, server_url: (
+            call_order.append("wait_for_run"),
+            wait_calls.append((batch_id, server_url)),
+            "passed",
+        )[-1],
     )
 
     result = service.score(
@@ -86,6 +94,11 @@ def test_score_uses_bot_runner(monkeypatch):
     assert result == 1.0
     assert len(trigger_calls) == 1
     assert wait_calls == [("batch-1", "http://runner-2:8000")]
+    assert call_order == [
+        "trigger_run",
+        "wait_for_task_completion",
+        "wait_for_run",
+    ]
     assert [call["headless"] for call in trigger_calls] == [False]
     assert [call["count"] for call in trigger_calls] == [1]
     for trigger_call in trigger_calls:

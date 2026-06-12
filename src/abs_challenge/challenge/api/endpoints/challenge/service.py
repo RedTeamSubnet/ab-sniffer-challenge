@@ -106,6 +106,14 @@ def score(
                         count=1,
                         headless=_headless,
                     )
+
+                    ch_utils.wait_for_task_completion(
+                        payload_manager=payload_manager,
+                        framework_order=_framework_order,
+                        framework_name=_framework_name,
+                        timeout=_bot_timeout,
+                    )
+
                     _run_status = _bot_runner.wait_for_run(
                         _batch_id,
                         server_url=_server_url,
@@ -124,12 +132,13 @@ def score(
                     )
                     continue
 
-            ch_utils.wait_for_task_completion(
-                payload_manager=payload_manager,
-                framework_order=_framework_order,
-                framework_name=_framework_name,
-                timeout=_bot_timeout,
-            )
+            if _framework_name == "human":
+                ch_utils.wait_for_task_completion(
+                    payload_manager=payload_manager,
+                    framework_order=_framework_order,
+                    framework_name=_framework_name,
+                    timeout=_bot_timeout,
+                )
         _score = payload_manager.calculate_score()
         payload_manager.submitted_payloads["final_score"] = _score
         logger.info(f"Final score calculated: {_score}")
