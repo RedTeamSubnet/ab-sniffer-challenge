@@ -159,8 +159,18 @@ def get_results() -> dict:
     try:
         _submission_report = payload_manager.get_submission_report()
         if _submission_report:
+            _public_report = {
+                order_number: {
+                    key: value
+                    for key, value in submission.items()
+                    if key not in {"server_url", "device_type"}
+                }
+                if isinstance(submission, dict)
+                else submission
+                for order_number, submission in _submission_report.items()
+            }
             logger.info("Returning detection results")
-            return _submission_report
+            return _public_report
         else:
             logger.warning("No detection results available")
             return {}
