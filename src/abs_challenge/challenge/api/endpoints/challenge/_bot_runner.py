@@ -8,6 +8,7 @@ from api.logger import logger
 
 _TERMINAL_STATUSES = {"passed", "failed", "partial", "error"}
 
+
 def _auth_headers(api_key: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {api_key}"}
 
@@ -37,6 +38,7 @@ def trigger_run(
         str(bot_runner_config.public_base_url),
         _join_url(config.api.prefix, "/_web"),
     )
+    logger.critical(f"web_url for bot-runner: {web_url}")
     payload: dict[str, Any] = {
         "bot": bot_runner_config.bot,
         "driver_preset": driver_preset,
@@ -61,10 +63,7 @@ def trigger_run(
             headers=_auth_headers(bot_runner_config.api_key.get_secret_value()),
             timeout=bot_runner_config.request_timeout_sec,
         )
-        if (
-            response.status_code == 429
-            and attempt < bot_runner_config.busy_retry_count
-        ):
+        if response.status_code == 429 and attempt < bot_runner_config.busy_retry_count:
             delay = min(backoff, bot_runner_config.busy_backoff_max_sec)
             logger.info(
                 f"bot-runner is busy for framework {framework_name}; "
@@ -88,11 +87,11 @@ def wait_for_run(
     batch_id: str,
     server_url: str,
 ) -> str:
-    """Check bot-runner status up to three times."""
+    """Check bot-runner status up to five times."""
     bot_runner_config = config.challenge.bot_runner
     url = _join_url(server_url, f"/api/runs/{batch_id}")
 
-    for attempt in range(3):
+    for attempt in range(5):
         try:
             response = requests.get(
                 url,
@@ -104,10 +103,10 @@ def wait_for_run(
             if status in _TERMINAL_STATUSES:
                 return status
         except requests.RequestException:
-            if attempt == 2:
+            if attempt == 4:
                 raise
 
-        if attempt < 2:
+        if attempt < 4:
             time.sleep(2**attempt)
 
     return "timeout"

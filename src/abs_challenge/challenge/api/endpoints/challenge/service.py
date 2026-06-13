@@ -106,6 +106,10 @@ def score(
                         count=1,
                         headless=_headless,
                     )
+                    _run_status = _bot_runner.wait_for_run(
+                        _batch_id,
+                        server_url=_server_url,
+                    )
 
                     ch_utils.wait_for_task_completion(
                         payload_manager=payload_manager,
@@ -114,10 +118,6 @@ def score(
                         timeout=_bot_timeout,
                     )
 
-                    _run_status = _bot_runner.wait_for_run(
-                        _batch_id,
-                        server_url=_server_url,
-                    )
                     if _run_status not in {"passed", "partial"}:
                         logger.warning(
                             f"bot-runner returned {_run_status} for "
@@ -160,13 +160,15 @@ def get_results() -> dict:
         _submission_report = payload_manager.get_submission_report()
         if _submission_report:
             _public_report = {
-                order_number: {
-                    key: value
-                    for key, value in submission.items()
-                    if key not in {"server_url", "device_type"}
-                }
-                if isinstance(submission, dict)
-                else submission
+                order_number: (
+                    {
+                        key: value
+                        for key, value in submission.items()
+                        if key not in {"server_url", "device_type"}
+                    }
+                    if isinstance(submission, dict)
+                    else submission
+                )
                 for order_number, submission in _submission_report.items()
             }
             logger.info("Returning detection results")
