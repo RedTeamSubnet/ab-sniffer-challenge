@@ -38,7 +38,7 @@ def trigger_run(
         str(bot_runner_config.public_base_url),
         _join_url(config.api.prefix, "/_web"),
     )
-    logger.critical(f"web_url for bot-runner: {web_url}")
+    logger.info(f"web_url for bot-runner: {web_url}")
     payload: dict[str, Any] = {
         "bot": bot_runner_config.bot,
         "driver_preset": driver_preset,

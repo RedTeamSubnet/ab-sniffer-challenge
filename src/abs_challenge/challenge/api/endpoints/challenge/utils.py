@@ -16,7 +16,7 @@ def copy_detection_files(miner_output: MinerOutput, detections_dir: str) -> None
     logger.info(f"Copying detection files from {detections_dir}")
     try:
         os.makedirs(detections_dir, exist_ok=True)
-        for _detection_file_pm in miner_output.detection_files:
+        for _detection_file_pm in miner_output.commit_files:
             _detection_path = os.path.join(detections_dir, _detection_file_pm.file_name)
             with open(_detection_path, "w") as _detection_file:
                 _detection_file.write(_detection_file_pm.content)
@@ -40,9 +40,7 @@ def wait_for_task_completion(
 
     while True:
         if payload_manager.check_task_compliance(framework_order):
-            logger.info(
-                f"Detection completed for {framework_name} within timeout."
-            )
+            logger.info(f"Detection completed for {framework_name} within timeout.")
             payload_manager.update_task_status(
                 framework_order, TaskStatusEnum.COMPLETED
             )

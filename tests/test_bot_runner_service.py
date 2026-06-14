@@ -46,7 +46,7 @@ class _DummyPayloadManager:
 
 def _miner_output() -> MinerOutput:
     return MinerOutput.model_construct(
-        detection_files=[
+        commit_files=[
             DetectionFilePM(file_name="dummy.js", content="window.__detected = true;")
         ]
     )

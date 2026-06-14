@@ -119,7 +119,7 @@ def score(
                     )
 
                     if _run_status not in {"passed", "partial"}:
-                        logger.warning(
+                        logger.info(
                             f"bot-runner returned {_run_status} for "
                             f"{_framework_name} in {_mode} mode"
                         )

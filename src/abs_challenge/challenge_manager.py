@@ -1,6 +1,6 @@
 import math
 import traceback
-import time
+from datetime import datetime, timezone
 
 import bittensor as bt
 import numpy as np
