@@ -1,5 +1,5 @@
 import random
-from collections import defaultdict
+from dataclasses import dataclass
 
 from pydantic import validate_call
 from api.config import config
@@ -10,6 +10,49 @@ HUMAN_TASK_NAME = "human"
 FRAMEWORK_SCORE_WEIGHT = 0.9
 HEADLESS_SCORE_WEIGHT = 0.1
 HEADLESS_ALLOWED_MISSES = 3
+
+
+@dataclass
+class ScoringTelemetry:
+    request_id: str | None = None
+    total_file_size_bytes: int = 0
+    runtime_seconds: float = 0.0
+    network_rx_bytes: int = 0
+    network_tx_bytes: int = 0
+    score: float | None = None
+
+
+class ScoringTelemetryManager:
+    def __init__(self):
+        self._latest = ScoringTelemetry()
+
+    def set_telemetry(
+        self,
+        request_id: str | None = None,
+        total_file_size_bytes: int = 0,
+        runtime_seconds: float = 0.0,
+        network_rx_bytes: int = 0,
+        network_tx_bytes: int = 0,
+        score: float | None = None,
+    ) -> None:
+        self._latest = ScoringTelemetry(
+            request_id=request_id,
+            total_file_size_bytes=total_file_size_bytes,
+            runtime_seconds=runtime_seconds,
+            network_rx_bytes=network_rx_bytes,
+            network_tx_bytes=network_tx_bytes,
+            score=score,
+        )
+        logger.info(
+            f"[Telemetry] Recorded: runtime={runtime_seconds:.2f}s, "
+            f"net_rx={network_rx_bytes}, net_tx={network_tx_bytes}"
+        )
+
+    def get_telemetry(self) -> ScoringTelemetry:
+        return self._latest
+
+    def reset(self) -> None:
+        self._latest = ScoringTelemetry()
 
 
 def build_run_schedule(
@@ -248,8 +291,12 @@ class PayloadManager:
 
 
 payload_manager = PayloadManager()
+scoring_telemetry_manager = ScoringTelemetryManager()
 
 __all__ = [
     "PayloadManager",
     "payload_manager",
+    "ScoringTelemetry",
+    "ScoringTelemetryManager",
+    "scoring_telemetry_manager",
 ]

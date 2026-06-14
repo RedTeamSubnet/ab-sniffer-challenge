@@ -5,9 +5,11 @@ from api.core.dependencies.auth import auth_api_key
 from api.endpoints.challenge.schemas import (
     MinerInput,
     MinerOutput,
+    ScoringTelemetryResponse,
     SubmissionPayloadsPM,
 )
 from api.endpoints.challenge import service
+from api.endpoints.challenge._payload_manager import scoring_telemetry_manager
 from api.logger import logger
 
 
@@ -63,7 +65,11 @@ def post_score(
     _score: float = 0.0
     try:
         web_url = str(request.url_for("web_ui"))
-        _score = service.score(miner_output=miner_output, web_url=web_url)
+        _score = service.score(
+            miner_output=miner_output,
+            web_url=web_url,
+            request_id=_request_id,
+        )
 
         logger.success(f"[{_request_id}] - Successfully evaluated the miner output.")
     except Exception as err:
@@ -142,6 +148,19 @@ def get_results(request: Request):
         raise HTTPException(status_code=500, detail="Error in getting results")
 
     return JSONResponse(content=results)
+
+
+@router.get(
+    "/telemetry",
+    summary="Get telemetry",
+    description="This endpoint returns the scoring telemetry from the latest run.",
+    response_class=JSONResponse,
+    response_model=ScoringTelemetryResponse,
+)
+def get_telemetry(request: Request):
+    _request_id = request.state.request_id
+    logger.info(f"[{_request_id}] - Getting telemetry...")
+    return scoring_telemetry_manager.get_telemetry()
 
 
 __all__ = ["router"]

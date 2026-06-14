@@ -1,4 +1,5 @@
 import pathlib
+import time
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -15,7 +16,10 @@ from api.endpoints.challenge.schemas import (
 )
 from api.endpoints.challenge import utils as ch_utils
 from api.logger import logger
-from api.endpoints.challenge._payload_manager import payload_manager
+from api.endpoints.challenge._payload_manager import (
+    payload_manager,
+    scoring_telemetry_manager,
+)
 from api.endpoints.challenge import _bot_runner
 
 _src_dir = pathlib.Path(__file__).parent.parent.parent.parent.resolve()
@@ -30,9 +34,15 @@ def get_task() -> MinerInput:
 def score(
     miner_output: MinerOutput,
     web_url: str,
+    request_id: str | None = None,
 ) -> float:
 
     _score = 0.0
+    _runtime_start = time.perf_counter()
+    _total_file_size = sum(
+        len(commit_file.content.encode("utf-8"))
+        for commit_file in miner_output.commit_files
+    )
     global payload_manager
     payload_manager.restart_manager()
     _all_tasks = payload_manager.tasks
@@ -148,6 +158,13 @@ def score(
             raise
         logger.error(f"Failed to score the miner output: {str(err)}!")
         raise
+    finally:
+        scoring_telemetry_manager.set_telemetry(
+            request_id=request_id,
+            total_file_size_bytes=_total_file_size,
+            runtime_seconds=round(time.perf_counter() - _runtime_start, 3),
+            score=_score,
+        )
 
     return _score
 

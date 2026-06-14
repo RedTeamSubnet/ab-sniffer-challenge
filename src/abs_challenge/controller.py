@@ -64,28 +64,26 @@ class ABSController(Controller):
         )
 
         _scoring_log.score = score
-        _payload, _feedback = self._get_results_from_challenge()
-        _scoring_log.miner_output["scoring_results"] = _feedback
-        self._save_result_to_data_folder(
-            result_payload=_payload, docker_hub_id=miner_commit.docker_hub_id
-        )
+        _result_response = self._get_results_from_challenge()
+        _scoring_log.miner_output["scoring_results"] = _result_response
         _scoring_log.miner_output["telemetry"] = self._get_telemetry_from_challenge()
         return
 
-    def _get_results_from_challenge(self) -> tuple[dict, dict]:
+    def _get_results_from_challenge(self) -> dict:
         result_url = "http://localhost:10001/results"
+        api_key = os.environ.get("RT_CHALLENGE_API_KEY")
         try:
-            response = requests.get(result_url, timeout=5, verify=False)  # nosec
+            response = requests.get(
+                result_url, timeout=5, verify=False, headers={"X-API-Key": api_key}
+            )  # nosec
             response.raise_for_status()
             _result_response = response.json() if response.content else {}
-            _payload = _result_response.get("payload", {})
-            _feedback = _result_response.get("feedback", {})
-            return _payload, _feedback
+            return _result_response
         except Exception as exc:
             bt.logging.error(
                 f"[CONTROLLER] Unable to fetch result from challenge endpoint: {exc}"
             )
-            return {}, {}
+            return {}
 
     def _get_telemetry_from_challenge(self) -> dict:
         telemetry_url = "http://localhost:10001/telemetry"
@@ -98,24 +96,6 @@ class ABSController(Controller):
                 f"[CONTROLLER] Unable to fetch telemetry from challenge endpoint: {exc}"
             )
             return {}
-
-    def _save_result_to_data_folder(
-        self, result_payload: dict, docker_hub_id: str
-    ) -> None:
-        flr_data_folder = os.environ.get("FLR_API_DATA_DIR")
-        if not flr_data_folder:
-            bt.logging.warning(
-                "[CONTROLLER] FLR_API_DATA_DIR environment variable not set, skipping result save"
-            )
-            return
-        os.makedirs(flr_data_folder, exist_ok=True)
-        _docker_hub_id = docker_hub_id.split("/")[-1]
-        result_file_path = os.path.join(
-            flr_data_folder, f"{_docker_hub_id}_result.json"
-        )
-        with open(result_file_path, "w") as f:
-            f.write(json.dumps(result_payload, indent=4))
-        bt.logging.info(f"[CONTROLLER] Result saved to {result_file_path}")
 
     def same_score_comparison(self, miner_commit: MinerChallengeCommit) -> None:
         if not miner_commit.scoring_logs:
