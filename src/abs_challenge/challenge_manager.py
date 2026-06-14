@@ -29,7 +29,7 @@ class ABSChallengeManager(ChallengeManager):
 
         self.max_similarity = 0.4
         self.min_similarity = 0
-        self.min_score = 0.1
+        self.min_score = 0.9
         self.break_point = 0.6
         self.max_input = 1.0
         self.min_value = 0
@@ -45,7 +45,7 @@ class ABSChallengeManager(ChallengeManager):
         """
 
         bt.logging.info(
-            f"[CHALLENGE MANAGER - ABSChallengeManager] Challenge {self.challenge_name}, updating miner scores and penalties"
+            f"[CHALLENGE MANAGER] Challenge {self.challenge_name}, updating miner scores and penalties"
         )
 
         for miner_commit in miner_commits:
@@ -85,7 +85,7 @@ class ABSChallengeManager(ChallengeManager):
                 miner_commit.score, miner_commit.penalty
             )
             if not miner_commit.scored_timestamp:
-                miner_commit.scored_timestamp = time.time()
+                miner_commit.scored_timestamp = datetime.now(timezone.utc).timestamp()
             elif not miner_commit.scored_timestamp and miner_commit.commit_timestamp:
                 miner_commit.scored_timestamp = (
                     miner_commit.commit_timestamp + 1 + 24 + 60 + 60
@@ -102,7 +102,7 @@ class ABSChallengeManager(ChallengeManager):
 
             if miner_commit.accepted and miner_commit.encrypted_commit:
                 bt.logging.info(
-                    f"[CHALLENGE MANAGER - ABSChallengeManager] Adding miner commit `{miner_commit.miner_uid}` "
+                    f"[CHALLENGE MANAGER - FLRChallengeManager] Adding miner commit `{miner_commit.miner_uid}` "
                     "to unique commit set."
                 )
                 self._try_add_unique_commit(
@@ -153,7 +153,7 @@ class ABSChallengeManager(ChallengeManager):
                 continue  # Skip invalid miners
 
             commit_timestamp = best_commit.scored_timestamp
-            evaluation_timestamp = time.time()
+            evaluation_timestamp = datetime.now(timezone.utc).timestamp()
             days_elapsed = (evaluation_timestamp - commit_timestamp) / 86400
 
             # Apply decay and adjustment

@@ -82,18 +82,16 @@ class DetectionFilePM(BaseModel):
 
 
 class MinerOutput(BaseModel):
-    detection_files: list[DetectionFilePM] = Field(
+    commit_files: list[DetectionFilePM] = Field(
         ...,
         title="Detection JS Files",
         description="List of detection JS files for the challenge.",
         examples=[_detection_files],
     )
 
-    @field_validator("detection_files", mode="after")
+    @field_validator("commit_files", mode="after")
     @classmethod
-    def _check_detection_files(
-        cls, val: list[DetectionFilePM]
-    ) -> list[DetectionFilePM]:
+    def _check_commit_files(cls, val: list[DetectionFilePM]) -> list[DetectionFilePM]:
         if len(val) != len(_detection_file_names):
             raise ValueError(
                 f"Number of submitted detection files ({len(val)}) does not match the expected number ({len(_detection_file_names)})!"
