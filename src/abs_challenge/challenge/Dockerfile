@@ -5,7 +5,7 @@ ARG PYTHON_VERSION=3.10
 ARG BASE_IMAGE=python:${PYTHON_VERSION}-slim-trixie
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG ABS_CHALLENGE_API_SLUG="rest-abs-challenge"
+ARG ABS_CHALLENGE_API_SLUG="abs-challenge"
 
 
 ## Here is the builder image:
