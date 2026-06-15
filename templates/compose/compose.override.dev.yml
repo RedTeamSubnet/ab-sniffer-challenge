@@ -1,23 +1,42 @@
 services:
-  challenger-api:
+  challenge-api:
+    image: redteamsubnet61/rest-abs-challenge:latest
     volumes:
-      - "./volumes/storage/rest.rt-abs-challenger/logs:${ABS_API_LOGS_DIR:-/var/log/rest.rt-abs-challenger}"
-      - "./volumes/storage/rest.rt-abs-challenger/data:${ABS_API_DATA_DIR:-/var/lib/rest.rt-abs-challenger}"
-      - "./scripts/docker/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh"
-      - "./src:/app/rest.rt-abs-challenger"
-      - "./volumes/.vscode-server:/home/wuc-user/.vscode-server"
+      - "./src/abs_challenge/challenge/scripts/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh"
+      - "./src/abs_challenge/challenge/api:/app/rest-abs-challenge/api"
+      - "./volumes/.vscode-server:/home/abs-user/.vscode-server"
     # deploy:
-    #   replicas: 0
+    #   replicas: 3
     #   resources:
     #     limits:
     #       cpus: "0.5"
     #       memory: 512M
+    # ports: !override
+    #   - "10001-10003:${ABS_CHALLENGE_API_PORT:-10001}"
     # command: ["/bin/bash"]
-    command: ["-b", "sudo service docker start && sleep 3 && sg docker \"uvicorn main:app --host=0.0.0.0 --port=${ABS_API_PORT:-10001} --no-access-log --no-server-header --proxy-headers --forwarded-allow-ips='*' --reload --reload-include='*.yml' --reload-include='.env'\""]
+    # command: ["-b", "uvicorn api.main:app --host=0.0.0.0 --port=${ABS_CHALLENGE_API_PORT:-10001} --no-access-log --no-server-header --proxy-headers --forwarded-allow-ips='*' --reload"]
     # healthcheck:
-    #   test: ["CMD-SHELL", "curl -f http://localhost:${ABS_API_PORT:-10001}/ping"]
+    #   test: ["CMD-SHELL", "curl -f http://localhost:${ABS_CHALLENGE_API_PORT:-10001}/ping"]
     #   start_period: 30s
     #   start_interval: 1s
     #   interval: 5m
     #   timeout: 5s
     #   retries: 3
+
+  miner-commit-api:
+    image: myhub/rest-abs-commit:latest
+    build:
+      context: ./examples/miner_commit
+    restart: unless-stopped
+    environment:
+      TERM: ${TERM:-xterm}
+      TZ: ${TZ:-UTC}
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - "./examples/miner_commit/src:/app"
+    ports:
+      - ${ABS_CHALLENGE_MINER_COMMIT_API_PORT:-10002}:${ABS_CHALLENGE_MINER_COMMIT_API_PORT:-10002}
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "${ABS_CHALLENGE_MINER_COMMIT_API_PORT:-10002}", "--reload"]
+    tty: true

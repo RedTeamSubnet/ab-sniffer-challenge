@@ -1,47 +1,28 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 
 ## --- Base --- ##
-# Getting path of this script file:
-_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+_SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-"$0"}")" >/dev/null 2>&1 && pwd -P)"
 _PROJECT_DIR="$(cd "${_SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd)"
 cd "${_PROJECT_DIR}" || exit 2
 
 
-# Loading .env file:
-if [ -f ".env" ]; then
-	# shellcheck disable=SC1091
-	source .env
-fi
+# shellcheck disable=SC1091
+[ -f .env ] && . .env
 ## --- Base --- ##
+
 
 ## --- Variables --- ##
 # Load from environment variables:
-VERSION_FILE_PATH="${VERSION_FILE_PATH:-./__version__.py}"
+VERSION_FILE_PATH="${VERSION_FILE_PATH:-./VERSION.txt}"
 ## --- Variables --- ##
 
-# Get current version from file:
+
 if [ -n "${VERSION_FILE_PATH}" ] && [ -f "${VERSION_FILE_PATH}" ]; then
-	_current_version=$(< "${VERSION_FILE_PATH}" grep "__version__ = " | awk -F' = ' '{print $2}' | tr -d '"') || exit 2
+	_current_version=$(cat "${VERSION_FILE_PATH}") || exit 2
 else
 	_current_version="0.0.0"
 fi
 
-# Handle arguments or default to python version:
-if [ -n "${1:-}" ]; then
-	for _input in "${@}"; do
-		case ${_input} in
-			-d | --docker)
-				echo "${_current_version}-$(date -u '+%y%m%d')"
-				shift;;
-			-p | --python)
-				echo "${_current_version}"
-				shift;;
-		esac
-	done
-else
-	# Default: return python version when no arguments passed
-	echo "${_current_version}"
-fi
-
+echo "${_current_version}"

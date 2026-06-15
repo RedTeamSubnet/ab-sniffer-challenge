@@ -1,0 +1,51 @@
+challenge:
+  api_key: "challenge_api_key"
+  docker_ulimit: 32768
+  bot_timeout: 10
+  human_timeout: 120
+  human_count: 3
+  verification:
+    endpoint: "http://challenge_server:8000/api/v1/verify"
+    api_key: "super_secure_api_key"
+    startup_url: "http://challenge_server:8000/start"
+    extra: {}
+  framework_images:
+    - name: seleniumbase
+      preset: "seleniumbase-local"
+      weight: 1.0
+    - name: seleniumdriverless
+      preset: "selenium-driverless-local"
+      weight: 1.0
+    - name: pydoll
+      preset: "pydoll-local"
+      weight: 1.0
+    - name: patchright
+      preset: "patchright-local"
+      weight: 1.0
+    - name: zendriver
+      preset: "zendriver-local"
+      weight: 1.0
+    - name: nodriver
+      preset: "nodriver-local"
+      weight: 1.0
+    - name: botasaurus
+      preset: "botasaurus-local"
+      weight: 1.0
+    - name: puppeteerextra
+      preset: "puppeteer-extra-local"
+      weight: 1.0
+  bot_runner:
+    servers:
+      - url: "http://bot-runner:8080"
+        device_type: "linux"
+    api_key: "bot_runner_api_key"
+    public_base_url: "http://challenge_server:10001"
+    bot: "aad-detect"
+    request_timeout_sec: 15
+    busy_retry_count: 3
+    busy_backoff_initial_sec: 0.5
+    busy_backoff_max_sec: 5.0
+    run_counts:
+      headed: 1
+      headless: 1
+    shuffle_runs: true

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Bot Detection"
+  short_description: "Research current automation detection methods"
+  default_prompt: "Use $research-bot-detection to research current browser automation detection techniques for AB Sniffer."

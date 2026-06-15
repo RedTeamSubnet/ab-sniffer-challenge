@@ -1,34 +1,25 @@
 services:
-  challenger-api:
-    image: redteamsubnet61/ab_sniffer_v5:latest
+  challenge-api:
+    image: redteamsubnet61/rest-abs-challenge:6.0.0
     build:
-      context: .
-      platforms:
-        - linux/amd64
+      context: ./src/abs_challenge/challenge
     restart: unless-stopped
     platform: linux/amd64
-    privileged: true
-    ulimits:
-      nofile: 32768
     environment:
       TERM: ${TERM:-xterm}
-      TZ: UTC
+      TZ: ${TZ:-UTC}
+      ABS_CHALLENGE_API_PORT: ${ABS_CHALLENGE_API_PORT:-10001}
       ABS_API_PORT: ${ABS_API_PORT:-10001}
-      ABS_CHALLENGE_API_KEY: ${ABS_CHALLENGE_API_KEY:-challenge_api_key}
-      ABS_CHALLENGE_VERIFICATION_API_KEY: ${ABS_CHALLENGE_VERIFICATION_API_KEY:-super_secure_api_key}
-      ABS_CHALLENGE_VERIFICATION_ENDPOINT: ${ABS_CHALLENGE_VERIFICATION_ENDPOINT:-http://challenge_server:8000/api/v1/verify}
-      ABS_CHALLENGE_VERIFICATION_STARTUP_URL: ${ABS_CHALLENGE_VERIFICATION_STARTUP_URL:-http://challenge_server:8000/start}
+      ABS_API_CONFIGS_DIR: ${ABS_API_CONFIGS_DIR:-/etc/rest-abs-challenge}
+      ABS_API_LOGS_DIR: ${ABS_API_LOGS_DIR:-/var/log/rest-abs-challenge}
+      ABS_API_DATA_DIR: ${ABS_API_DATA_DIR:-/var/lib/rest-abs-challenge}
     env_file:
       - path: .env
         required: false
     volumes:
-      - "api-logs:${ABS_API_LOGS_DIR:-/var/log/rest.rt-abs-challenger}"
-      - "api-data:${ABS_API_DATA_DIR:-/var/lib/rest.rt-abs-challenger}"
+      - "./volumes/configs/rest-abs-challenge:${ABS_API_CONFIGS_DIR:-/etc/rest-abs-challenge}"
+      - "./volumes/storage/rest-abs-challenge/logs:${ABS_API_LOGS_DIR:-/var/log/rest-abs-challenge}"
+      - "./volumes/storage/rest-abs-challenge/data:${ABS_API_DATA_DIR:-/var/lib/rest-abs-challenge}"
     ports:
-      - "${ABS_API_PORT:-10001}:${ABS_API_PORT:-10001}"
+      - "${ABS_CHALLENGE_API_PORT:-10001}:${ABS_CHALLENGE_API_PORT:-10001}"
     tty: true
-
-
-volumes:
-  api-logs:
-  api-data:

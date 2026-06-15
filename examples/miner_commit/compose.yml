@@ -1,0 +1,13 @@
+services:
+  miner-api:
+    image: redteamsubnet61/submission-abs-challenge:6.0.0
+    build:
+      context: .
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      TERM: ${TERM:-xterm}
+      TZ: ${TZ:-UTC}
+    ports:
+      - 10002:10002
+    tty: true
