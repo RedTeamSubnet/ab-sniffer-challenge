@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Submission"
+  short_description: "Prepare and publish a submission image"
+  default_prompt: "Use $build-submission to prepare, build, and confirmation-gate publishing the AB Sniffer image."

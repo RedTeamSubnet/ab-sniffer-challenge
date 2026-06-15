@@ -1,0 +1,4 @@
+interface:
+  display_name: "Validate Submission"
+  short_description: "Validate AB Sniffer detection submissions"
+  default_prompt: "Use $validate-submission to validate the current AB Sniffer JavaScript submission."

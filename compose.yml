@@ -1,9 +1,10 @@
 services:
   challenge-api:
-    image: redteamsubnet61/rest-abs-challenge:0.0.0
+    image: redteamsubnet61/rest-abs-challenge:6.0.0
     build:
       context: ./src/abs_challenge/challenge
     restart: unless-stopped
+    platform: linux/amd64
     environment:
       TERM: ${TERM:-xterm}
       TZ: ${TZ:-UTC}

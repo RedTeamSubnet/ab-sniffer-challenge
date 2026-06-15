@@ -176,6 +176,7 @@ __pycache__/
 .Python
 examples/miner_commit/node_modules/
 examples/miner_commit/.eslint-submission-*/
+skills/challenge-score/
 build/
 develop-eggs/
 dist/
