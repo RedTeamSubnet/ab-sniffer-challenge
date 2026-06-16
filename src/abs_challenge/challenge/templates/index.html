@@ -8,12 +8,7 @@
 	<link rel="icon" href="https://docs.theredteam.io/assets/images/logo.light.svg" type="image/svg+xml" />
 	<title>Detections Visualizer</title>
 	<meta name="asb-result-endpoint" content="" />
-	<script>
-      window.ABS_RESULT_ENDPOINT =  `{{ abs_result_endpoint }}`;
-      window.ABS_SESSION_ORDER_NUMBER = `{{ abs_session_order_number }}`;
-      window.ABS_FRAMEWORK_NAMES= JSON.parse(`{{ abs_framework_names | tojson | safe }}`);
-    </script>
-
+	<script>window.ABS_RESULT_ENDPOINT = `{{ abs_result_endpoint }}`, window.ABS_SESSION_ORDER_NUMBER = `{{ abs_session_order_number }}`, window.ABS_FRAMEWORK_NAMES = JSON.parse(`{{ abs_framework_names | tojson | safe }}`)</script>
 	<script src="static/js/user-agent-spoof.js"></script>
 	<script src="static/detections/headless.js"></script>
 	<script src="static/detections/botasaurus.js"></script>
@@ -25,7 +20,7 @@
 	<script src="static/detections/seleniumdriverless.js"></script>
 	<script src="static/detections/zendriver.js"></script>
 	<script>!function () { try { var e = document.querySelector('meta[name="abs-result-endpoint"]'); e && e.content && (window.ABS_RESULT_ENDPOINT = e.content) } catch (e) { console.warn("Failed to read ASB endpoint meta", e) } }()</script>
-	<script defer="defer" src="/static/js/main.1629bd0e.js"></script>
+	<script defer="defer" src="/static/js/main.3256c9f3.js"></script>
 	<link href="/static/css/main.c1e9ffb3.css" rel="stylesheet">
 </head>
 
