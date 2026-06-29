@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-
 import pathlib
 
 from onion_config import ConfigLoader
 from beans_logging import logger
 
 from api.core.configs import MainConfig
-
 
 config: MainConfig
 try:

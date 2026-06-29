@@ -18,10 +18,7 @@ def _dummy_config(frameworks, *, headed, headless, human_count, shuffle):
             framework_images=[SimpleNamespace(name=name) for name in frameworks],
             human_count=human_count,
             bot_runner=SimpleNamespace(
-                servers=[
-                    SimpleNamespace(**server)
-                    for server in SERVERS
-                ],
+                servers=[SimpleNamespace(**server) for server in SERVERS],
                 run_counts=SimpleNamespace(headed=headed, headless=headless),
                 shuffle_runs=shuffle,
             ),

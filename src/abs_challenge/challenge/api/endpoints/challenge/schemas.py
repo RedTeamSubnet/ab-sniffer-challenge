@@ -24,7 +24,7 @@ _detection_file_names: set[str] = {
 try:
     for _detection_path in _detection_paths:
         if _detection_path.name in _detection_file_names:
-            with open(_detection_path, "r") as _detection_file:
+            with open(_detection_path) as _detection_file:
                 _detection_files.append(
                     {
                         "file_name": _detection_path.name,
@@ -45,7 +45,7 @@ class TaskStatusEnum(str, Enum):
 
 
 class MinerInput(BaseModel):
-    random_val: Optional[
+    random_val: None | (
         Annotated[
             str,
             StringConstraints(
@@ -55,7 +55,7 @@ class MinerInput(BaseModel):
                 pattern=ALPHANUM_REGEX,
             ),
         ]
-    ] = Field(
+    ) = Field(
         default_factory=utils.gen_random_string,
         title="Random Value",
         description="Random value to prevent caching.",
@@ -128,13 +128,13 @@ class PayloadPM(BaseModel):
         description="Indicates whether the driver was detected.",
         examples=[True],
     )
-    raw: Optional[bool] = Field(
+    raw: bool | None = Field(
         None,
         title="Raw Detection",
         description="Indicates whether the detection was raw.",
         examples=[False],
     )
-    framework_name: Optional[str] = Field(
+    framework_name: str | None = Field(
         None,
         title="Automation framework name",
         description="Name of the automation framework.",
@@ -196,7 +196,7 @@ class SubmissionPayloadsPM(BaseModel):
 
 
 class ScoringTelemetryResponse(BaseModel):
-    request_id: Optional[str] = Field(
+    request_id: str | None = Field(
         default=None,
         title="Request ID",
         description="The request ID for this scoring run.",
@@ -225,7 +225,7 @@ class ScoringTelemetryResponse(BaseModel):
         description="Total network bytes transmitted during scoring.",
         ge=0,
     )
-    score: Optional[float] = Field(
+    score: float | None = Field(
         default=None,
         title="Score",
         description="The computed score for this scoring run.",

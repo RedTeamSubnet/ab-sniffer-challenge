@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
 from enum import Enum
-
 
 ENV_PREFIX = "ABS_"
 ENV_PREFIX_API = f"{ENV_PREFIX}API_"

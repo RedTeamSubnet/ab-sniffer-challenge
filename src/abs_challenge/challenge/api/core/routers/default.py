@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
 
 from api.config import config
-
 
 router = APIRouter(tags=["Default"])
 

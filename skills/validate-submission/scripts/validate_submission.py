@@ -9,7 +9,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-
 EXPECTED_FUNCTIONS = {
     "botasaurus.js": "detect_botasaurus",
     "headless.js": "detect_headless_non_ua",
@@ -76,8 +75,7 @@ def resolve_eslint_runtime(conda_env: str) -> tuple[list[str], Path]:
         raise RuntimeError("Conda is not available")
     result = subprocess.run(
         [conda, "run", "-n", conda_env, "npm", "root", "-g"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
         check=False,
     )
@@ -130,8 +128,7 @@ def run_eslint(
             result = subprocess.run(
                 cmd,
                 cwd=root / "examples" / "miner_commit",
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 text=True,
                 check=False,
             )
@@ -142,7 +139,9 @@ def run_eslint(
             node_modules.unlink(missing_ok=True)
 
     if not result.stdout.strip():
-        detail = result.stderr.strip() or f"ESLint exited with status {result.returncode}"
+        detail = (
+            result.stderr.strip() or f"ESLint exited with status {result.returncode}"
+        )
         return [f"ESLint produced no JSON output: {detail}"]
 
     try:

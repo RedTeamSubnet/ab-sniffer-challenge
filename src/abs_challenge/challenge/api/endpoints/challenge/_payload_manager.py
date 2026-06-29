@@ -235,9 +235,7 @@ class PayloadManager:
         )
         penalty = HEADLESS_SCORE_WEIGHT / HEADLESS_ALLOWED_MISSES
         score = max(0.0, HEADLESS_SCORE_WEIGHT - (headless_failures * penalty))
-        logger.info(
-            f"Headless detection: failures={headless_failures}, score={score}"
-        )
+        logger.info(f"Headless detection: failures={headless_failures}, score={score}")
         return score
 
     def gen_ran_framework_sequence(self) -> None:

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from pydantic import validate_call
 from fastapi.concurrency import run_in_threadpool
 
@@ -12,7 +10,6 @@ from beans_logging_fastapi import (
 
 from api.core.constants import WarnEnum
 from api.config import config
-
 
 logger_loader = LoggerLoader(config=config.logger, auto_config_file=False)
 logger: Logger = logger_loader.load()

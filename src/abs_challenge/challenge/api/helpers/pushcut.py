@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import logging
 from typing import Optional
 
 import requests
 from pydantic import validate_call, SecretStr, AnyHttpUrl
-
 
 logger = logging.getLogger(__name__)
 
@@ -109,10 +106,10 @@ class Pushcut:
         shortcut: str,
         input_url: AnyHttpUrl,
         timeout: int | str | None = None,
-        delay: Optional[str] = None,
-        identifier: Optional[str] = None,
-        server_id: Optional[str] = None,
-        api_key: Optional[SecretStr] = None,
+        delay: str | None = None,
+        identifier: str | None = None,
+        server_id: str | None = None,
+        api_key: SecretStr | None = None,
     ) -> None:
         """Execute a shortcut on Pushcut.io with the provided input URL.
 

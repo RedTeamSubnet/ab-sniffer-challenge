@@ -35,4 +35,3 @@ For every finding include:
 
 End with a prioritized test matrix for the current nine detection files. Explicitly label
 fingerprinting findings as prohibited and do not implement or recommend them.
-

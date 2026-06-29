@@ -21,4 +21,3 @@ Every file must:
 - define and expose the expected function;
 - return or resolve to a value interpreted as a boolean by the challenge page;
 - pass `examples/miner_commit/eslint.config.mjs`.
-

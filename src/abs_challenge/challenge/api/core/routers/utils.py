@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
-
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import JSONResponse
 
 from api.core.schemas import BaseResPM, HealthResPM
 from api.core.responses import BaseResponse
-
 
 router = APIRouter(tags=["Utils"])
 

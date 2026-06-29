@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 import errno
 import base64
@@ -23,7 +21,7 @@ from api.core import utils
 def gen_key_pair(
     key_size: int,
     as_str: bool = False,
-) -> Tuple[Union[PrivateKeyTypes, str], Union[PublicKeyTypes, str]]:
+) -> tuple[PrivateKeyTypes | str, PublicKeyTypes | str]:
 
     _private_key: PrivateKeyTypes = rsa.generate_private_key(
         public_exponent=65537, key_size=key_size
@@ -162,7 +160,7 @@ async def async_create_keys(
 @validate_call
 async def async_get_private_key(
     private_key_path: str, as_str: bool = False
-) -> Union[PrivateKeyTypes, str]:
+) -> PrivateKeyTypes | str:
     """Async read asymmetric private key from file.
 
     Args:
@@ -202,7 +200,7 @@ async def async_get_private_key(
 @validate_call
 async def async_get_public_key(
     public_key_path: str, as_str: bool = False
-) -> Union[PublicKeyTypes, str]:
+) -> PublicKeyTypes | str:
     """Async read asymmetric public key from file.
 
     Args:
@@ -241,7 +239,7 @@ async def async_get_public_key(
 @validate_call
 async def async_get_keys(
     private_key_path: str, public_key_path: str, as_str: bool = False
-) -> Tuple[Union[PrivateKeyTypes, str], Union[PublicKeyTypes, str]]:
+) -> tuple[PrivateKeyTypes | str, PublicKeyTypes | str]:
     """Async read asymmetric keys from file.
 
     Args:
@@ -378,7 +376,7 @@ def create_keys(
 @validate_call
 def get_private_key(
     private_key_path: str, as_str: bool = False
-) -> Union[PrivateKeyTypes, str]:
+) -> PrivateKeyTypes | str:
     """Read asymmetric private key from file.
 
     Args:
@@ -416,9 +414,7 @@ def get_private_key(
 
 
 @validate_call
-def get_public_key(
-    public_key_path: str, as_str: bool = False
-) -> Union[PublicKeyTypes, str]:
+def get_public_key(public_key_path: str, as_str: bool = False) -> PublicKeyTypes | str:
     """Read asymmetric public key from file.
 
     Args:
@@ -457,7 +453,7 @@ def get_public_key(
 @validate_call
 def get_keys(
     private_key_path: str, public_key_path: str, as_str: bool = False
-) -> Tuple[Union[PrivateKeyTypes, str], Union[PublicKeyTypes, str]]:
+) -> tuple[PrivateKeyTypes | str, PublicKeyTypes | str]:
     """Read asymmetric keys from file.
 
     Args:
@@ -477,12 +473,12 @@ def get_keys(
 
 @validate_call(config={"arbitrary_types_allowed": True})
 def encrypt_with_public_key(
-    plaintext: Union[str, bytes],
+    plaintext: str | bytes,
     public_key: PublicKeyTypes,
     base64_encode: bool = False,
     as_str: bool = False,
     warn_mode: WarnEnum = WarnEnum.DEBUG,
-) -> Union[str, bytes]:
+) -> str | bytes:
     """Encrypt plaintext with public key.
 
     Args:
@@ -502,7 +498,7 @@ def encrypt_with_public_key(
     if isinstance(plaintext, str):
         plaintext = plaintext.encode()
 
-    _ciphertext: Union[str, bytes]
+    _ciphertext: str | bytes
     try:
         _message = "Encrypting plaintext with asymmetric public key..."
         if warn_mode == WarnEnum.ALWAYS:
@@ -545,12 +541,12 @@ def encrypt_with_public_key(
 
 @validate_call(config={"arbitrary_types_allowed": True})
 def decrypt_with_private_key(
-    ciphertext: Union[str, bytes],
+    ciphertext: str | bytes,
     private_key: PrivateKeyTypes,
     base64_decode: bool = False,
     as_str: bool = False,
     warn_mode: WarnEnum = WarnEnum.DEBUG,
-) -> Union[str, bytes]:
+) -> str | bytes:
     """Decrypt ciphertext with private key.
 
     Args:
@@ -573,7 +569,7 @@ def decrypt_with_private_key(
     if base64_decode:
         ciphertext = base64.b64decode(ciphertext)
 
-    _plaintext: Union[str, bytes]
+    _plaintext: str | bytes
     try:
         _message = "Decrypting ciphertext with asymmetric private key..."
         if warn_mode == WarnEnum.ALWAYS:

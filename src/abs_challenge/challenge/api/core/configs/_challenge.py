@@ -44,7 +44,7 @@ class BotRunnerServerConfig(BaseModel):
 
 
 class BotRunnerConfig(FrozenBaseConfig):
-    servers: List[BotRunnerServerConfig] = Field(..., min_length=1)
+    servers: list[BotRunnerServerConfig] = Field(..., min_length=1)
     api_key: SecretStr = Field(..., min_length=12, max_length=128)
     public_base_url: AnyHttpUrl = Field(...)
     bot: str = Field(default="aad-detect", min_length=1, max_length=128)
@@ -68,7 +68,7 @@ class ChallengeConfig(FrozenBaseConfig):
     human_timeout: int = Field(default=120, ge=1)
     # Number of human-verification runs mixed into each scoring cycle.
     human_count: int = Field(default=1, ge=0)
-    framework_images: List[FrameworkImageConfig] = Field(...)
+    framework_images: list[FrameworkImageConfig] = Field(...)
     bot_runner: BotRunnerConfig = Field(...)
 
     model_config = SettingsConfigDict(

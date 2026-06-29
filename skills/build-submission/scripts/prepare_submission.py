@@ -6,7 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 EXPECTED_FILES = (
     "botasaurus.js",
     "headless.js",
@@ -25,7 +24,9 @@ def repository_root() -> Path:
 
 
 def run_validator(root: Path, source: Path) -> None:
-    validator = root / "skills" / "validate-submission" / "scripts" / "validate_submission.py"
+    validator = (
+        root / "skills" / "validate-submission" / "scripts" / "validate_submission.py"
+    )
     result = subprocess.run(
         [sys.executable, str(validator), "--source", str(source)],
         cwd=root,
@@ -45,7 +46,9 @@ def prepare(root: Path, source: Path, destination: Path) -> None:
 
 def main() -> int:
     root = repository_root()
-    parser = argparse.ArgumentParser(description="Prepare AB Sniffer miner commit files")
+    parser = argparse.ArgumentParser(
+        description="Prepare AB Sniffer miner commit files"
+    )
     parser.add_argument(
         "--source",
         type=Path,

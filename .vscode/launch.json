@@ -9,8 +9,7 @@
 			"cwd": "${workspaceFolder}/src/abs_challenge/challenge",
 			"envFile": "${workspaceFolder}/.env",
 			"env": {
-				"ABS_API_PORT": "10001",
-				"ABS_CHALLENGE_API_KEY": "password12345"
+				"ABS_API_PORT": "10001"
 			},
 			"console": "integratedTerminal"
 		}

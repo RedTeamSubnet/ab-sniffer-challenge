@@ -1,12 +1,12 @@
 challenge:
-  api_key: "challenge_api_key"
+  api_key: "challenge_api_key" #pragma: allowlist secret
   docker_ulimit: 32768
   bot_timeout: 10
   human_timeout: 120
   human_count: 3
   verification:
     endpoint: "http://challenge_server:8000/api/v1/verify"
-    api_key: "super_secure_api_key"
+    api_key: "super_secure_api_key" #pragma: allowlist secret
     startup_url: "http://challenge_server:8000/start"
     extra: {}
   framework_images:
@@ -38,7 +38,7 @@ challenge:
     servers:
       - url: "http://bot-runner:8080"
         device_type: "linux"
-    api_key: "bot_runner_api_key"
+    api_key: "bot_runner_api_key" #pragma: allowlist secret
     public_base_url: "http://challenge_server:10001"
     bot: "aad-detect"
     request_timeout_sec: 15

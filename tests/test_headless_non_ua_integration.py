@@ -1,8 +1,11 @@
 from pathlib import Path
 
 from api.endpoints.challenge import service
-from api.endpoints.challenge.schemas import PayloadPM, SubmissionPayloadsPM, _frameworks_names
-
+from api.endpoints.challenge.schemas import (
+    PayloadPM,
+    SubmissionPayloadsPM,
+    _frameworks_names,
+)
 
 _ROOT = Path(__file__).resolve().parent.parent
 _TEMPLATE_DIR = _ROOT / "src" / "abs_challenge" / "challenge" / "templates"
@@ -11,8 +14,8 @@ _TEMPLATE_DIR = _ROOT / "src" / "abs_challenge" / "challenge" / "templates"
 def test_headless_detector_is_loaded_before_framework_detectors():
     index_html = (_TEMPLATE_DIR / "index.html").read_text()
 
-    headless_idx = index_html.index('static/detections/headless_non_ua.js')
-    framework_idx = index_html.index('static/detections/botasaurus.js')
+    headless_idx = index_html.index("static/detections/headless_non_ua.js")
+    framework_idx = index_html.index("static/detections/botasaurus.js")
 
     assert headless_idx < framework_idx
 

@@ -6,7 +6,9 @@ import pytest
 
 # Ensure the nested challenge API package is on sys.path so that `api.*`
 # imports resolve for unit tests, matching the newer challenge project layout.
-_API_DIR = Path(__file__).resolve().parent.parent / "src" / "abs_challenge" / "challenge"
+_API_DIR = (
+    Path(__file__).resolve().parent.parent / "src" / "abs_challenge" / "challenge"
+)
 if _API_DIR.is_dir() and str(_API_DIR) not in sys.path:
     sys.path.insert(0, str(_API_DIR))
 
