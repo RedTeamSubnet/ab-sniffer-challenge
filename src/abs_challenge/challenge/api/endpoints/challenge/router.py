@@ -12,7 +12,6 @@ from api.endpoints.challenge import service
 from api.endpoints.challenge._payload_manager import scoring_telemetry_manager
 from api.logger import logger
 
-
 router = APIRouter(tags=["Challenge"])
 
 
