@@ -1,6 +1,6 @@
 services:
   challenge-api:
-    image: redteamsubnet61/rest-abs-challenge:6.0.1
+    image: redteamsubnet61/rest-abs-challenge:6.0.2
     build:
       context: ./src/abs_challenge/challenge
     restart: unless-stopped
