@@ -1,5 +1,13 @@
 # Changelog
 
+## v6.0.2 (2026-06-29)
+
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+
+
+**Full Changelog**: https://github.com/RedTeamSubnet/ab-sniffer-challenge/compare/v6.0.1...v6.0.2
+
 ## v6.0.1 (2026-06-23)
 
 <!-- Release notes generated using configuration in .github/release.yml at main -->
